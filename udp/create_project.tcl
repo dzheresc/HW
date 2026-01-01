@@ -49,7 +49,7 @@ set_property strategy "Vivado Implementation Defaults" [get_runs impl_1]
 set_property steps.phys_opt_design.is_enabled true [get_runs impl_1]
 
 # Save project
-save_project
+save_project_as "udp_blinker"
 
 # Print project information
 puts "################################################################################"
