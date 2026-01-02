@@ -9,7 +9,7 @@ module top (
     input wire eth_rx_clk,      // MII receive clock (25 MHz)
     input wire eth_rx_dv,       // MII receive data valid
     input wire [3:0] eth_rxd,   // MII receive data
-    input wire eth_rxerr,       // MII receive error (not used but defined in XDC)
+ //   input wire eth_rxerr,       // MII receive error (not used but defined in XDC)
     output wire eth_rstn,       // Ethernet PHY reset (active low)
     output wire eth_ref_clk,    // Ethernet reference clock
     
@@ -20,10 +20,12 @@ module top (
     // Ethernet PHY reset - keep PHY out of reset
     assign eth_rstn = 1'b1;
     
-    // Ethernet reference clock - not used for MII but may be needed
-    // This would typically come from a clock generator, but for simple display
-    // we can leave it unconnected or tie it appropriately
-    // assign eth_ref_clk = 1'b0; // Uncomment if needed
+    // Clock divider to generate 25 MHz for eth_ref_clk from 100 MHz system clock
+    clk_divider u_clk_divider (
+        .clk_in(CLK100MHZ),
+        .rst(1'b0),              // No reset needed
+        .clk_out(eth_ref_clk)    // 25 MHz output
+    );
     
     // Instantiate the Ethernet to LED display module
     eth_led_display u_eth_led_display (

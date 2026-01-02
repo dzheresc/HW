@@ -6,11 +6,16 @@ This project displays received Ethernet data bits on LEDs using the MII (Media I
 
 The design captures 4-bit data from the MII Ethernet receive interface (`eth_rxd[3:0]`) and displays it in real-time on the board's LEDs (`led[3:0]`). The LEDs update whenever valid data is received on the Ethernet interface.
 
-## Hardware Requirements
+## Requirements
 
+### Hardware
 - **Board**: Digilent Arty A7-35 (Rev. D or Rev. E)
 - **Ethernet PHY**: SMSC Ethernet PHY (onboard)
 - **Interface**: MII (Media Independent Interface)
+
+### Software
+- **Vivado**: 2017.4 or compatible version
+- **Target Part**: xc7a35ticsg324-1L (Arty A7-35)
 
 ## Project Structure
 
@@ -19,7 +24,9 @@ eth_recv/
 ├── README.md                    # This file
 ├── Arty-A7-35-Master.xdc       # Pin constraints file
 ├── top.v                        # Top-level module
-└── eth_led_display.v           # Core Ethernet to LED display module
+├── eth_led_display.v           # Core Ethernet to LED display module
+├── create_project.tcl          # TCL script to create Vivado project
+└── build_project.tcl            # TCL script to build project (synthesis/implementation)
 ```
 
 ## Files Description
@@ -41,6 +48,21 @@ Pin constraints file defining:
 - LED pin assignments (`led[0]` through `led[3]`)
 - MII Ethernet receive interface pins (`eth_rxd[0:3]`, `eth_rx_clk`, `eth_rx_dv`)
 - Clock constraints for `eth_rx_clk` (25 MHz, 40 ns period)
+
+### `create_project.tcl`
+TCL script for Vivado 2017.4 that:
+- Creates a new Vivado project with correct part number
+- Adds all source and constraint files
+- Sets the top-level module
+- Configures project settings
+
+### `build_project.tcl`
+TCL script for Vivado 2017.4 that:
+- Opens the project
+- Runs synthesis
+- Runs implementation
+- Generates bitstream
+- Reports build status
 
 ## MII Interface Signals
 
@@ -65,7 +87,40 @@ The MII interface uses the following signals:
 
 ## Usage
 
-### Setting Up in Vivado
+### Quick Start with TCL Scripts (Recommended)
+
+The easiest way to set up and build the project is using the provided TCL scripts:
+
+#### Method 1: Using Vivado GUI
+
+1. Open Vivado 2017.4
+2. In the TCL console, navigate to the project directory:
+   ```tcl
+   cd <path_to_eth_recv>
+   ```
+3. Create the project:
+   ```tcl
+   source create_project.tcl
+   ```
+4. Build the project (synthesis, implementation, bitstream):
+   ```tcl
+   source build_project.tcl
+   ```
+5. Program the FPGA with the generated bitstream from `./eth_recv/eth_recv.runs/impl_1/top.bit`
+
+#### Method 2: Using Command Line (Batch Mode)
+
+1. Open a terminal/command prompt
+2. Navigate to the project directory
+3. Create and build the project:
+   ```bash
+   vivado -mode batch -source create_project.tcl
+   vivado -mode batch -source build_project.tcl
+   ```
+
+### Manual Setup in Vivado
+
+Alternatively, you can set up the project manually:
 
 1. Create a new Vivado project targeting the Arty A7-35 (xc7a35ticsg324-1L)
 2. Add the following files to your project:
@@ -107,6 +162,8 @@ The MII interface uses the following signals:
 - LEDs display the raw received data bits - this is useful for debugging and monitoring Ethernet traffic
 - The Ethernet PHY must be properly configured and initialized (handled by keeping `eth_rstn` high)
 - This is a simple demonstration design - for actual Ethernet communication, you would need additional logic to parse Ethernet frames
+- The TCL scripts are designed for Vivado 2017.4 but should work with newer versions
+- If using a different Vivado version, you may need to adjust the TCL scripts accordingly
 
 ## License
 
