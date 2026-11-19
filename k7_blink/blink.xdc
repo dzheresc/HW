@@ -1,0 +1,16 @@
+# Minimal constraints for nextpnr-xilinx (only PACKAGE_PIN / IOSTANDARD are honoured)
+set_property PACKAGE_PIN F17 [get_ports clk]
+set_property IOSTANDARD LVCMOS33 [get_ports clk]
+
+set_property PACKAGE_PIN A19 [get_ports {led[0]}]
+set_property PACKAGE_PIN B20 [get_ports {led[1]}]
+set_property PACKAGE_PIN A20 [get_ports {led[2]}]
+set_property PACKAGE_PIN A17 [get_ports {led[3]}]
+set_property PACKAGE_PIN B17 [get_ports {led[4]}]
+set_property PACKAGE_PIN A18 [get_ports {led[5]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[0]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[1]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[2]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[3]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[4]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[5]}]

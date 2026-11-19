@@ -1,0 +1,46 @@
+# --- Vivado / openXC7 build outputs (regenerate with build.tcl / make) ---
+build/
+chipdb/
+.Xil/
+.cache/
+*.runs/
+*.cache/
+*.hw/
+*.ip_user_files/
+*.sim/
+xsim.dir/
+*.dcp
+*.bit
+*.bin
+*.mcs
+*.prm
+*.ltx
+*.frames
+*.fasm
+*.rpt
+
+# Generated IP: keep only the .xci, Vivado regenerates the rest from it
+**/ip/*/*
+!**/ip/*/*.xci
+
+# Logs, journals, webtalk, tool scratch
+*.log
+*.jou
+*.out
+*.pb
+*.os
+*.str
+usage_statistics_webtalk.*
+webtalk*
+vivado*.backup.*
+
+# Host tool binaries
+*.exe
+*.o
+*.obj
+
+# Flash backups and dumps: never commit
+*flash_backup*
+*backup*.bin
+pattern*.bin
+gap*.bin
