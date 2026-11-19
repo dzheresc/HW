@@ -9,6 +9,7 @@
 - `k7_pcie/` - PCIe Gen2 x1 endpoint with BAR0 registers and QSPI flash access
 - `k7_nic/` - PCIe plus 10G Ethernet combined
 - `k7_udp/` - 1 Hz UDP counter sender over 10G, controlled through BAR0
+- `k7_cap/` - 10G packet capture: SFP A to a host hugepage ring by DMA over PCIe Gen2 x4, with a C++ pcap tool
 
 ## Kintex UltraScale+ KU5P board
 
