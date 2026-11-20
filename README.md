@@ -14,6 +14,7 @@
 ## Kintex UltraScale+ KU5P board
 
 - `ku5p_pcie/` - PCIe endpoint with BAR registers and dual QSPI flash access
+- `ku5p_ddr/` - 2 GB DDR4 (MIG 2400 MT/s) with an in-FPGA memory test and host DMA over PCIe, C++ test tool
 
 Build outputs (bitstreams, checkpoints, reports, generated IP) are not
 committed. Run each project's `build.tcl` (or `make` for k7_blink) to rebuild;
