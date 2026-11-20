@@ -54,11 +54,12 @@ memory test found errors.
   real root port).
 
 ## Load and run
-Normal path (no JTAG): write the image with the ku5p_pcie tool, then warm-reboot the PC so the
-BIOS enumerates the new design (the CPU root port 00:01.0 needs that, see ku5p_pcie):
+Normal path (no JTAG): write the image with the ku5p_pcie tool, then reload the FPGA from flash with
+the REBOOT register (verified on ku5p_pcie v7: back on the bus in ~0.5 s, BARs working, no host
+reboot; a warm reboot of the PC is only needed after a JTAG load):
 
     sudo ~/ku5p_pcie/bin/fpgaflash -b ku5p write build/top.bin
-    sudo reboot
+    sudo ~/ku5p_pcie/bin/fpgaflash -b ku5p reboot
 
 Then:
 
