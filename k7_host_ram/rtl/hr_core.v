@@ -5,6 +5,8 @@
 `default_nettype none
 module hr_core #(parameter TMO_BITS = 25) (          // 2^25 cycles = 134 ms at 250 MHz
   input  wire        clk, rst,
+  input  wire [5:0]  window,                              // max reads in flight, 1..32
+  output wire        idle,                                // nothing queued, sent-but-unanswered or undelivered
   input  wire [15:0] cfg_id, input wire cfg_bme, input wire [9:0] npages,     // npages 0..512
   input  wire        tbl_we, input wire [8:0] tbl_idx, input wire [42:0] tbl_page,  // bus address [63:21]
   input  wire        cmd_valid, input wire cmd_we, input wire [22:0] cmd_line, output wire cmd_ready, // 2^23 lines = 1 GB
@@ -30,9 +32,11 @@ module hr_core #(parameter TMO_BITS = 25) (          // 2^25 cycles = 134 ms at 
   wire adv = !tx_valid || tx_ready;
   reg dw4;                                                 // above 4 GB (registered in XL for timing)
   reg [31:0] alo, ahi;
-  assign cmd_ready = (st==IDLE) && (cmd_we || !busy[atag]);
+  assign cmd_ready = (st==IDLE) && (cmd_we || (!busy[atag] && infl < window));
   assign wd_ready = (st==DROP) || (adv && st==DAT && !tail) || (adv && st==H1 && we && !dw4);
   wire alloc = (st==XL) && !we;
+  reg [5:0] infl;
+  assign idle = (st==IDLE) && !tx_valid && (infl==0) && !rd_valid;
   wire [31:0] w0 = bsw(wd_data[31:0]), w1 = bsw(wd_data[63:32]);
   always @(posedge clk) begin
     if (adv) tx_valid <= 0;
@@ -105,11 +109,12 @@ module hr_core #(parameter TMO_BITS = 25) (          // 2^25 cycles = 134 ms at 
     if (fatal) begin done <= done | busy; bad <= bad | busy; end
     if (dadv) rd_valid <= 0;
     if (dgo) begin rd_valid <= 1; rd_data <= (zero[dtag]||bad[dtag]) ? 64'd0 : rob[{dtag,dcnt}]; rd_err <= zero[dtag]||bad[dtag]; rd_last <= dcnt==15; dcnt <= dcnt+1; end
+    infl <= infl + {5'd0,alloc} - {5'd0,dend};
     if (dend) begin dtag <= dtag+1; busy[dtag] <= 0; done[dtag] <= 0; end
     if (alloc) begin atag <= atag+1; busy[atag] <= 1; bad[atag] <= 0; zero[atag] <= !ok; done[atag] <= !ok; end
     if (cpois) bad[t1] <= 1;
     if (cdone) begin done[cdt] <= 1; if (cfail) bad[cdt] <= 1; end
-    if (rst) begin busy<=0; done<=0; bad<=0; zero<=0; atag<=0; dtag<=0; dcnt<=0; rd_valid<=0; tmo<=0; fatal<=0; end
+    if (rst) begin busy<=0; done<=0; bad<=0; zero<=0; atag<=0; dtag<=0; dcnt<=0; rd_valid<=0; tmo<=0; fatal<=0; infl<=0; end
   end
 endmodule
 `default_nettype wire

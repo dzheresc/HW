@@ -1,0 +1,60 @@
+## k7_host_ram: PCIe Gen2 x4 (from k7_cap, 10G removed)
+
+## Board clock / LEDs
+set_property PACKAGE_PIN F17 [get_ports sys_clk]
+set_property IOSTANDARD LVCMOS33 [get_ports sys_clk]
+create_clock -period 10.000 -name sys_clk [get_ports sys_clk]
+set_property PACKAGE_PIN A19 [get_ports {led[0]}]
+set_property PACKAGE_PIN B20 [get_ports {led[1]}]
+set_property PACKAGE_PIN A20 [get_ports {led[2]}]
+set_property PACKAGE_PIN A17 [get_ports {led[3]}]
+set_property PACKAGE_PIN B17 [get_ports {led[4]}]
+set_property PACKAGE_PIN A18 [get_ports {led[5]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[*]}]
+set_false_path -to [get_ports {led[*]}]
+
+## PCIe (quad 115)
+set_property PACKAGE_PIN E17 [get_ports pcie_perst_n]
+set_property IOSTANDARD LVCMOS33 [get_ports pcie_perst_n]
+set_property PULLUP true [get_ports pcie_perst_n]
+set_false_path -from [get_ports pcie_perst_n]
+set_property PACKAGE_PIN H6 [get_ports pcie_refclk_p]
+set_property PACKAGE_PIN H5 [get_ports pcie_refclk_n]
+create_clock -period 10.000 -name pcie_refclk [get_ports pcie_refclk_p]
+# The PCIe IP's own XDC puts lanes 0..3 on X0Y7..X0Y4 (the SFP quad on this board);
+# the board routes them to quad 115: lane 0 X0Y3 (J4) ... lane 3 X0Y0 (R4).
+set_property LOC GTXE2_CHANNEL_X0Y3 [get_cells -hier -filter {REF_NAME == GTXE2_CHANNEL && NAME =~ pcie/*pipe_lane?0?.gt_wrapper*}]
+set_property LOC GTXE2_CHANNEL_X0Y2 [get_cells -hier -filter {REF_NAME == GTXE2_CHANNEL && NAME =~ pcie/*pipe_lane?1?.gt_wrapper*}]
+set_property LOC GTXE2_CHANNEL_X0Y1 [get_cells -hier -filter {REF_NAME == GTXE2_CHANNEL && NAME =~ pcie/*pipe_lane?2?.gt_wrapper*}]
+set_property LOC GTXE2_CHANNEL_X0Y0 [get_cells -hier -filter {REF_NAME == GTXE2_CHANNEL && NAME =~ pcie/*pipe_lane?3?.gt_wrapper*}]
+set_property PACKAGE_PIN J4 [get_ports {pci_exp_rxp[0]}]
+set_property PACKAGE_PIN L4 [get_ports {pci_exp_rxp[1]}]
+set_property PACKAGE_PIN N4 [get_ports {pci_exp_rxp[2]}]
+set_property PACKAGE_PIN R4 [get_ports {pci_exp_rxp[3]}]
+
+## Config flash (dual-purpose bank 14 pins; CCLK via STARTUPE2)
+set_property PACKAGE_PIN C23 [get_ports flash_cs_n]
+set_property PACKAGE_PIN B24 [get_ports {flash_dq[0]}]
+set_property PACKAGE_PIN A25 [get_ports {flash_dq[1]}]
+set_property PACKAGE_PIN B22 [get_ports {flash_dq[2]}]
+set_property PACKAGE_PIN A22 [get_ports {flash_dq[3]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {flash_cs_n flash_dq[*]}]
+set_property PULLUP true [get_ports {flash_dq[*]}]
+# The flash interface runs at <= 16 MHz with whole user_clk cycles of margin.
+set_false_path -to [get_ports {flash_cs_n flash_dq[*]}]
+set_false_path -from [get_ports {flash_dq[*]}]
+
+## Reboot (IPROG via ICAPE2) runs on STARTUPE2 CFGMCLK (nominal 65 MHz, constrained with margin)
+create_clock -period 12.000 -name cfgmclk [get_pins startup/CFGMCLK]
+
+## Async clock domains
+set_clock_groups -asynchronous \
+  -group [get_clocks sys_clk] \
+  -group [get_clocks -include_generated_clocks {pcie_refclk txoutclk_x0y0}] \
+  -group [get_clocks cfgmclk]
+
+## Configuration
+set_property CFGBVS VCCO [current_design]
+set_property CONFIG_VOLTAGE 3.3 [current_design]
+set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 4 [current_design]
+set_property BITSTREAM.GENERAL.COMPRESS TRUE [current_design]

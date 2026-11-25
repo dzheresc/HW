@@ -18,7 +18,7 @@ int main(int argc,char**argv){
   auto*d=new Vhr_core; std::unordered_map<u64,u64> host; std::map<u64,bool> legal; const int NP=8;
   std::vector<u64> page(NP); for(int i=0;i<NP;i++){page[i]=(i&1)?(0x100000000ull+((u64)(rnd(6000))<<21)):((u64)(64+i*37)<<21); legal[page[i]]=1;}
   u64 cyc=0; auto tick=[&]{d->clk=0;d->eval();d->clk=1;d->eval();cyc++;};
-  d->rst=1;d->cfg_id=0x0200;d->cfg_bme=1;d->npages=NP;d->rx_valid=0;d->tx_ready=0;d->rd_ready=0;d->cmd_valid=0;d->wd_valid=0;d->tbl_we=0;
+  d->rst=1;d->cfg_id=0x0200;d->window=32;d->cfg_bme=1;d->npages=NP;d->rx_valid=0;d->tx_ready=0;d->rd_ready=0;d->cmd_valid=0;d->wd_valid=0;d->tbl_we=0;
   for(int i=0;i<4;i++)tick(); d->rst=0;
   for(int i=0;i<512;i++){d->tbl_we=1;d->tbl_idx=i;d->tbl_page=(i<NP?page[i]:0xdead00000000ull)>>21;tick();} d->tbl_we=0;
   std::unordered_map<u64,u64> ref;                                  // key: line*16+w
