@@ -67,7 +67,8 @@ Kintex-7 xc7k325t:
 - `k7_udp/` - 1 Hz UDP counter sender over 10G, controlled through BAR0
 - `k7_cap/` - 10G packet capture: SFP A to a host hugepage ring by DMA over PCIe Gen2 x4, C++ pcap tool
 - `k7_link/` - dual-port 10G test: replies to ARP, ping and UDP echo on both SFP+ ports (2024.2; simulated and
-  built, not yet run on hardware)
+  built; port B runs on hardware, see its README)
+- `k7_host_ram/` - host RAM as random-access FPGA memory over PCIe (core and simulation only so far)
 
 Kintex UltraScale+ KU5P:
 - `ku5p_pcie/` - x8 card: PCIe endpoint, flash programming and reload over PCIe, `fpgaflash` host tool

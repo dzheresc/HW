@@ -38,7 +38,13 @@ Host on port B, once (any free address in 10.10.0.0/24; replace `<iface>`):
 Then `ping 192.168.0.110` (any host on the switch's LAN) and `ping 10.10.0.1` (port B host).
 Load: `sudo ping -f -s 1472 10.10.0.1`. Counters on the shed PC: `sudo ~/k7_link/k7link 1`.
 
-Built 2026-11-25 (2024.2): WNS +0.418 ns, WHS +0.040 ns, 12.6k LUTs, 24.5 BRAM. Simulation PASS. Not yet run on hardware.
+Built 2026-11-25 (2024.2): WNS +0.418 ns, WHS +0.040 ns, 12.6k LUTs, 24.5 BRAM. Simulation PASS.
+
+Port B on hardware (2026-11-25, 10G host at 10.10.0.2 over the DAC; ARP reports 02:4b:37:00:01:01):
+- ping flood: 6,095,472 of 6,095,472 answered (56 B and 1472 B)
+- UDP echo, 1472 B at line rate for 300 s: 250 of 243,187,000 frames not returned (cause not found: PC to FPGA
+  bit errors or an FPGA FIFO overflow both fit). Smaller sizes were limited by the PC.
+Port A is not tested here.
 
 ## Load
 
