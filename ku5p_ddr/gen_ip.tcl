@@ -1,15 +1,17 @@
-# Generate IP once: vivado -mode batch -source gen_ip.tcl [-tclargs [DDR_PERIOD_PS]]
+# Generate IP once: vivado -mode batch -source gen_ip.tcl [-tclargs [DDR_PERIOD_PS] [debug]]
 # Needs Kintex UltraScale+ support (oldgamer: /opt/Xilinx/Vivado/2017.4).
 #
 # pcie_ku    pcie4_uscale_plus as in ku5p_pcie (Gen3 x8 capable, 256-bit @ 250 MHz, 10ee:9021,
 #            BAR0 4 KB) plus client tags for the DMA requester (RQ/RC).
 # ddr4_0     MIG DDR4, native interface: two MT40A512M16HA-075E (x16, 8 Gb) = 32-bit, 2 GB,
 #            100 MHz differential system clock on H23/H24 (bank 66).
-#            DDR_PERIOD_PS default 833 (2400 MT/s, the vendor PCIe demo); 1250 = 1600 MT/s fallback.
+#            DDR_PERIOD_PS default 833 (2400 MT/s, vendor PCIe demo); 1600 = 1250 MT/s CL10/CWL9
+#            (vendor KU5P_DDR4_TEST). "debug" enables the MIG calibration debug (needs debug.xdc).
 # jtag_axi_m JTAG-to-AXI master for register access without PCIe.
 set d [file normalize [file dirname [info script]]]
 set part xcku5p-ffvb676-1-e
 set tck  [expr {[llength $argv] > 0 ? [lindex $argv 0] : 833}]
+set dbg  [expr {[lsearch $argv debug] >= 0 ? "Enable" : "Disable"}]   ;# "debug": MIG calibration debug over JTAG (Hardware Manager)
 create_project -in_memory -part $part
 file mkdir $d/ip
 
@@ -59,7 +61,7 @@ if {$tck == 833} {
   set_property -dict [list CONFIG.C0.DDR4_InputClockPeriod {10057} CONFIG.C0.DDR4_CasLatency {10} CONFIG.C0.DDR4_CasWriteLatency {9}] $m
 }
 set_property -dict [list CONFIG.System_Clock {Differential} CONFIG.Reference_Clock {Differential} \
-  CONFIG.C0.DDR4_Mem_Add_Map {ROW_COLUMN_BANK} CONFIG.C0.DDR4_Ordering {Normal} CONFIG.Debug_Signal {Disable}] $m
+  CONFIG.C0.DDR4_Mem_Add_Map {ROW_COLUMN_BANK} CONFIG.C0.DDR4_Ordering {Normal} CONFIG.Debug_Signal $dbg] $m
 generate_target all $m
 
 foreach p {CONFIG.coreclk_freq CONFIG.axisten_if_enable_client_tag CONFIG.PF0_DEVICE_ID CONFIG.pf0_bar0_size} {

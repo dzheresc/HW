@@ -16,7 +16,9 @@
 //   0x014 SCRATCH  RW
 //   0x018 LINK     RO  PCIe status (see top.v)
 //   0x01C CSREL    WO  any write releases CS (when idle)
-//   0x020 FEAT     RO  FEAT parameter: [0] second flash present
+//   0x020 FEAT     RO  FEAT parameter: [0] second flash present, [1] reboot register
+//   0x0FC REBOOT   RW  reads 0x52425431 ("RBT1"); write 0x424F4F54 ("BOOT") to reload the
+//                      FPGA from flash (IPROG). Same address on the K7 designs.
 //   0x400..0x7FC TXBUF RW  bytes to send, byte i at word i/4 bits [8*(i%4)+:8]
 //   0x800..0xBFC RXBUF RO  bytes received, same layout
 // SPI mode 0, MSB first, MOSI on D0, MISO on D1, D2/D3 (WP#/HOLD#) held high.
@@ -38,13 +40,17 @@ module spi_regs #(
   output reg  [31:0] rdata,
 
   input  wire [31:0] link_status,
+  input  wire [31:0] dbg0,        // 0x024 debug (see top.v)
+  input  wire [31:0] dbg1,        // 0x028
+  input  wire [31:0] dbg2,        // 0x02C
 
   output reg         spi_sck,
   output reg         spi_cs_n,
   output reg         spi_mosi,
   output reg         spi_sel,     // CTRL[8]: which flash CS to drive
   input  wire        spi_miso,
-  output wire        busy_o
+  output wire        busy_o,
+  output reg         reboot_go = 1'b0   // one-cycle pulse on a valid REBOOT write
 );
   reg [7:0]  half;
   reg [31:0] scratch;
@@ -72,6 +78,7 @@ module spi_regs #(
   // register reads / writes
   always @(posedge clk) begin
     ack <= req;
+    reboot_go <= req && we && addr[11:2] == 10'h03F && wdata == 32'h424F4F54;
     if (req && we && addr[11:10] == 2'b01) txmem[addr[9:2]] <= wdata;
     if (req) begin
       case (addr[11:10])
@@ -83,6 +90,10 @@ module spi_regs #(
           8'h05: rdata <= scratch;
           8'h06: rdata <= link_status;
           8'h08: rdata <= FEAT;
+          8'h09: rdata <= dbg0;
+          8'h0A: rdata <= dbg1;
+          8'h0B: rdata <= dbg2;
+          8'h3F: rdata <= 32'h52425431;   // REBOOT signature
           default: rdata <= 32'd0;
         endcase
         2'b01: rdata <= txmem[addr[9:2]];

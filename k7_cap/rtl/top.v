@@ -267,16 +267,23 @@ module top (
     if (eth_tgl_s[2] != eth_tgl_s[1]) eth_rates_u <= eth_rates;
   end
 
+  wire reboot_go;
   spi_regs regs (
     .clk(user_clk), .rst(por),
     .req(r_req), .we(r_we), .addr(r_addr), .wdata(r_wdata), .ack(bus_ack), .rdata(spi_rdata),
     .link_status(link_status),
     .eth_stat(eth_stat_s2), .eth_rates(eth_rates_u),
-    .spi_sck(spi_sck), .spi_cs_n(spi_cs_n), .spi_mosi(spi_mosi), .spi_miso(spi_miso), .busy_o(spi_busy)
+    .spi_sck(spi_sck), .spi_cs_n(spi_cs_n), .spi_mosi(spi_mosi), .spi_miso(spi_miso), .busy_o(spi_busy),
+    .reboot_go(reboot_go)
   );
 
+  // reboot from flash: IPROG through ICAPE2, clocked by CFGMCLK (~65 MHz)
+  wire cfgmclk, icap_clk;
+  BUFG cfgmclk_bufg (.I(cfgmclk), .O(icap_clk));
+  fpga_reboot #(.FAMILY("7S")) reboot (.clk(user_clk), .go(reboot_go), .icap_clk(icap_clk), .busy());
+
   STARTUPE2 #(.PROG_USR("FALSE"), .SIM_CCLK_FREQ(0.0)) startup (
-    .CFGCLK(), .CFGMCLK(), .EOS(), .PREQ(),
+    .CFGCLK(), .CFGMCLK(cfgmclk), .EOS(), .PREQ(),
     .CLK(1'b0), .GSR(1'b0), .GTS(1'b0), .KEYCLEARB(1'b1), .PACK(1'b0),
     .USRCCLKO(spi_sck), .USRCCLKTS(1'b0), .USRDONEO(1'b1), .USRDONETS(1'b1)
   );

@@ -135,3 +135,10 @@ Build: 44 min on the Dell, timing met (WNS +0.297 ns), 11.5k LUTs, 87.5 BRAM til
 
 `RX_FRAMES` counts every frame the MAC delivered since the last reset, including the few that
 arrive between reset and enable (or after disable); those are neither captured nor drops.
+
+## REBOOT register (2026-11-20, VERSION 0x00040001)
+BAR0 0x0FC reads 0x52425431 ("RBT1"); writing 0x424F4F54 ("BOOT") makes the FPGA reload itself
+from flash (IPROG via ICAPE2, rtl/fpga_reboot.v, clocked by STARTUPE2 CFGMCLK). Capture and 10G
+unchanged. Host: `sudo ~/ku5p_pcie/bin/fpgaflash -b k7 reboot` (detaches, waits, rescans; back in 0.5 s).
+Verified: reboot from the factory flash image came back as 10ee:7024; k7_cap then written to flash (2026-11-20) and a reboot from it came back as 10ee:7022 with both SFPs locked. Factory image: C:\develop\k7_flash_backup_2026-11-18.bin. Flash image: build/top.bin
+(SPIx4, 32 MB; copy on oldgamer ~/k7_cap/top_reboot.bin). Pre-change sources: ..\k7_cap_prereboot_backup.

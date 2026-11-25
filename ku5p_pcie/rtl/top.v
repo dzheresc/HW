@@ -33,9 +33,9 @@ module top #(
 );
   localparam NDW = DATA_W / 32;
 `ifdef DUAL_QSPI
-  localparam [31:0] FEAT = 32'h1;
+  localparam [31:0] FEAT = 32'h3;   // [0] second flash, [1] reboot
 `else
-  localparam [31:0] FEAT = 32'h0;
+  localparam [31:0] FEAT = 32'h2;   // [1] reboot
 `endif
 
   // ---------------- clocks / resets ----------------
@@ -58,6 +58,7 @@ module top #(
   wire [DATA_W-1:0] cc_tdata;  wire [NDW-1:0] cc_tkeep;  wire cc_tlast, cc_tvalid;  wire [3:0] cc_tready;
   wire [5:0] ltssm;  wire [1:0] cur_speed;  wire [2:0] neg_width;
   wire       pwr_chg;
+  wire       phy_rdy;
 
   // Unlisted inputs (RQ, MSI, cfg_mgmt, ...) are tied low by synthesis.
   pcie_ku pcie (
@@ -88,11 +89,22 @@ module top #(
     .cfg_hot_reset_in(1'b0), .cfg_req_pm_transition_l23_ready(1'b0),
 
     .sys_clk(refclk_div2), .sys_clk_gt(refclk_gt), .sys_reset(perst_n),   // sys_reset is PERST#, active low
-    .phy_rdy_out()
+    .phy_rdy_out(phy_rdy)
   );
 
   // ---------------- PCIe target ----------------
-  wire p_req, p_we;  wire [11:2] p_addr;  wire [31:0] p_wdata;
+  wire [2:0] pio_state;  wire [31:0] pio_dw0, pio_dw2;
+  wire p_req;
+  // debug counters (0x024): CQ beats, CC beats, PCIe register accesses
+  reg [7:0] cq_cnt = 8'd0, cc_cnt = 8'd0, pb_cnt = 8'd0;
+  always @(posedge user_clk) begin
+    if (cq_tvalid && cq_tready) cq_cnt <= cq_cnt + 8'd1;
+    if (cc_tvalid && cc_tready[0]) cc_cnt <= cc_cnt + 8'd1;
+    if (p_req) pb_cnt <= pb_cnt + 8'd1;
+  end
+  wire [31:0] dbg0;
+  wire p_we;  wire [11:2] p_addr;  wire [31:0] p_wdata;
+  assign dbg0 = {cq_cnt, cc_cnt, pb_cnt, cq_tvalid, cq_tready, cc_tvalid, cc_tready[0], 1'b0, pio_state};
   wire        bus_ack;  wire [31:0] bus_rdata;
   reg         ack_to_pcie;
 
@@ -103,7 +115,8 @@ module top #(
     .cc_tdata(cc_tdata), .cc_tkeep(cc_tkeep), .cc_tlast(cc_tlast), .cc_tvalid(cc_tvalid),
     .cc_tready(cc_tready[0]),
     .bus_req(p_req), .bus_we(p_we), .bus_addr(p_addr), .bus_wdata(p_wdata),
-    .bus_ack(bus_ack & ack_to_pcie), .bus_rdata(bus_rdata)
+    .bus_ack(bus_ack & ack_to_pcie), .bus_rdata(bus_rdata),
+    .dbg_state(pio_state), .dbg_dw0(pio_dw0), .dbg_dw2(pio_dw2)
   );
 
   // ---------------- JTAG-to-AXI master (AXI4-Lite) ----------------
@@ -162,17 +175,29 @@ module top #(
 
   // ---------------- SPI registers ----------------
   wire spi_sck, spi_cs_n, spi_mosi, spi_miso, spi_busy, spi_sel;
+  wire reboot_go, cfgmclk;
   // LINK: [15] link up, [14:12] negotiated width (0=x1 1=x2 2=x4 3=x8),
   //       [9:8] speed (0=2.5 1=5 2=8 GT/s), [5:0] LTSSM
-  wire [31:0] link_status = {16'd0, user_lnk_up, neg_width, 2'b00, cur_speed, 2'b00, ltssm};
+  // debug: [16] phy_rdy, [17] PERST# (high = released), [18] user_reset,
+  //        [29:24] highest LTSSM state seen since configuration
+  reg [1:0] perst_s = 2'b00, phy_s = 2'b00;
+  reg [5:0] ltssm_max = 6'd0;
+  always @(posedge user_clk) begin
+    perst_s <= {perst_s[0], perst_n};
+    phy_s   <= {phy_s[0], phy_rdy};
+    if (ltssm > ltssm_max) ltssm_max <= ltssm;
+  end
+  wire [31:0] link_status = {2'b00, ltssm_max, 5'd0, user_reset, perst_s[1], phy_s[1],
+                             user_lnk_up, neg_width, 2'b00, cur_speed, 2'b00, ltssm};
 
   // user_clk is 250 MHz here: reset SCK half period 8 -> 15.6 MHz (as on the K7)
-  spi_regs #(.ID(32'h4B555043), .VERSION(32'h00020000), .FEAT(FEAT), .HALF_RESET(8'd8)) regs (
+  spi_regs #(.ID(32'h4B555043), .VERSION(32'h00020001), .FEAT(FEAT), .HALF_RESET(8'd8)) regs (
     .clk(user_clk), .rst(por),
     .req(r_req), .we(r_we), .addr(r_addr), .wdata(r_wdata), .ack(bus_ack), .rdata(bus_rdata),
     .link_status(link_status),
+    .dbg0(dbg0), .dbg1(pio_dw0), .dbg2(pio_dw2),
     .spi_sck(spi_sck), .spi_cs_n(spi_cs_n), .spi_mosi(spi_mosi), .spi_miso(spi_miso),
-    .spi_sel(spi_sel), .busy_o(spi_busy)
+    .spi_sel(spi_sel), .busy_o(spi_busy), .reboot_go(reboot_go)
   );
 
   // ---------------- primary flash via STARTUPE3 ----------------
@@ -184,7 +209,7 @@ module top #(
   end
 
   STARTUPE3 #(.PROG_USR("FALSE"), .SIM_CCLK_FREQ(0.0)) startup (
-    .CFGCLK(), .CFGMCLK(), .EOS(), .PREQ(),
+    .CFGCLK(), .CFGMCLK(cfgmclk), .EOS(), .PREQ(),
     .DI(sdi),                          // D00..D03 inputs
     .DO({2'b11, 1'b1, mosi_q}),        // D00 = MOSI, D02 = WP#, D03 = HOLD#/RESET#
     .DTS(4'b0010),                     // D01 (MISO) tristated, others driven
@@ -193,6 +218,11 @@ module top #(
     .USRCCLKO(spi_sck), .USRCCLKTS(1'b0),
     .USRDONEO(1'b1), .USRDONETS(1'b1)
   );
+
+  // ---------------- reboot from flash (IPROG via ICAPE3, clocked by CFGMCLK ~50 MHz) ----------------
+  wire icap_clk;
+  BUFG cfgmclk_bufg (.I(cfgmclk), .O(icap_clk));
+  fpga_reboot #(.FAMILY("USP")) reboot (.clk(user_clk), .go(reboot_go), .icap_clk(icap_clk), .busy());
 
   reg miso0_q;
   always @(posedge user_clk) miso0_q <= sdi[1];

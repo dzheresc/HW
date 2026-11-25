@@ -1,5 +1,5 @@
 # Non-project build (run gen_ip.tcl once first):
-#   vivado -mode batch -source build.tcl
+#   vivado -mode batch -source build.tcl [-tclargs UI_MHZ]
 # Outputs: build/top.bit, build/top.ltx, build/top.bin (flash image for fpgaflash)
 set d [file normalize [file dirname [info script]]]
 cd $d
@@ -10,7 +10,13 @@ foreach f [get_files *.xci] { catch {set_property generate_synth_checkpoint fals
 generate_target all [get_ips]
 read_verilog [glob $d/rtl/*.v]
 read_xdc $d/top.xdc
-synth_design -top top -generic LANES=8 -generic DATA_W=256
+if {[lsearch $argv debug] >= 0} { read_xdc $d/debug.xdc }   ;# with a gen_ip.tcl ... debug MIG
+# ui_clk MHz reported in DDR_INFO (300 at 2400 MT/s; 156 for the 1250 MT/s MIG, gen_ip.tcl 1600)
+set ui [expr {[llength $argv] > 0 && [string is integer [lindex $argv 0]] ? [lindex $argv 0] : 300}]
+set defs {}
+if {[lsearch $argv ila] >= 0} { lappend defs -verilog_define ILA }
+synth_design -top top -generic LANES=8 -generic DATA_W=256 -generic UI_MHZ=$ui {*}$defs
+if {[lsearch $argv ila] >= 0} { source $d/ila.tcl }
 opt_design
 place_design
 phys_opt_design

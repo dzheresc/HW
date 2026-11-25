@@ -44,3 +44,10 @@ vivado*.backup.*
 *backup*.bin
 pattern*.bin
 gap*.bin
+
+# More local leftovers
+vendor/
+build_*/
+.tmpCRC/
+clockInfo.txt
+ila_*.csv

@@ -65,6 +65,9 @@ set_property PULLUP true [get_ports {flash_dq[*]}]
 set_false_path -to [get_ports {flash_cs_n flash_dq[*]}]
 set_false_path -from [get_ports {flash_dq[*]}]
 
+## Reboot (IPROG via ICAPE2) runs on STARTUPE2 CFGMCLK (nominal 65 MHz, constrained with margin)
+create_clock -period 12.000 -name cfgmclk [get_pins startup/CFGMCLK]
+
 ## Async clock domains: sys clk, PCIe refclk (and its generated user clocks), SFP refclk
 ## (TX PCS clocks), and one recovered RX clock per cage. Crossings use synchronisers,
 ## Gray-coded counters, or a toggle handshake (eth10g.v, top.v).
@@ -73,7 +76,8 @@ set_clock_groups -asynchronous \
   -group [get_clocks -include_generated_clocks {pcie_refclk txoutclk_x0y0}] \
   -group [get_clocks -include_generated_clocks sfp_refclk] \
   -group [get_clocks -include_generated_clocks -of_objects [get_pins -hier -filter {NAME =~ *gt0_gtx10g_i*gtxe2_i/RXOUTCLK}]] \
-  -group [get_clocks -include_generated_clocks -of_objects [get_pins -hier -filter {NAME =~ *gt1_gtx10g_i*gtxe2_i/RXOUTCLK}]]
+  -group [get_clocks -include_generated_clocks -of_objects [get_pins -hier -filter {NAME =~ *gt1_gtx10g_i*gtxe2_i/RXOUTCLK}]] \
+  -group [get_clocks cfgmclk]
 
 ## Configuration
 set_property CFGBVS VCCO [current_design]

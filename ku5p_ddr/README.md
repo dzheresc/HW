@@ -40,18 +40,21 @@ always be re-flashed over PCIe) and adds the board's 2 GB of DDR4.
 LEDs (silkscreen LED2..LED7): heartbeat, PERST# released, link up, SPI busy, DDR calibrated,
 memory test found errors.
 
-## Build (oldgamer, Vivado 2017.4 with UltraScale+)
-    cd ~/ku5p_ddr && source /opt/Xilinx/Vivado/2017.4/settings64.sh
+## Build (Vivado 2024.2 with UltraScale+; do not use 2017.4)
     vivado -mode batch -source gen_ip.tcl      # once (PCIe, MIG, JTAG-AXI)
     vivado -mode batch -source build.tcl       # -> build/top.bit, build/top.bin
     g++ -O2 -std=c++17 -o bin/ku5pddr host/ku5pddr.cpp
 
-## Status (2026-11-20)
-- build_v1 (oldgamer `~/ku5p_ddr/build`, copy in `build_v1/`): timing met (WNS +0.291 ns,
-  WHS +0.010 ns), 17.9k LUTs / 25.9k FFs / 58 BRAM tiles, top.bin sha256 b507c55a...0ccc.
-  No unsafe clock crossings in report_clock_interaction.
-- Datapath simulation passes. **Not yet tried on hardware** (calibration at 2400 MT/s, DMA on the
-  real root port).
+## Status (2026-11-21)
+- Latest build, in 2024.2 with the die temperature register (0xC74): timing met, WNS +0.221 ns,
+  WHS +0.010 ns. No hardware result for the 2024.2 build is recorded here.
+- **The MIG from Vivado 2017.4 does not work on this board**: calibration passes but every read returns
+  a corrupt lower half of the burst (the writes are correct, checked with an ILA). 1250 MT/s did not calibrate.
+- Datapath simulation passes. A host to DDR DMA timed out once on hardware (2017.4 build) and was not
+  debugged; counters were added at 0xC60..0xC70 (`ku5pddr regs` dumps them).
+- Debug aids: `build.tcl -tclargs debug` (with `gen_ip.tcl ... debug`) and `mig_report.tcl`;
+  `build.tcl -tclargs ila` and `ila_capture.tcl`. `sim/mig` runs the memory test on the real MIG RTL
+  (needs the MIG example project; its path is hard-coded in `run_mig_sim.tcl`).
 
 ## Load and run
 Normal path (no JTAG): write the image with the ku5p_pcie tool, then reload the FPGA from flash with

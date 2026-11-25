@@ -5,7 +5,8 @@
 //                        [3] memtest done (since last start)  [4] DMA busy  [5] DMA done
 //                        [6] DMA error  [7] bus master enable  [9:8] max payload code
 //                        [14:12] max read request code  [16] single access busy
-//   0xC04 DDR_INFO   RO  [15:0] size in MB (2048)  [23:16] DQ width (32)  [31:24] ui_clk MHz
+//   0xC04 DDR_INFO   RO  [15:0] size in MB (2048)  [23:16] DQ width (32)
+//   0xC0C DDR_UIMHZ  RO  ui_clk MHz (build parameter)
 //   0xC08 DDR_CTRL   RW  [0] MIG sys_rst (set, then clear, to recalibrate)
 //   0xC10 MT_CTRL    RW  [1] write pass  [2] read/verify pass  [5:4] pattern mode;
 //                        writing with [0] set starts the test
@@ -26,14 +27,18 @@
 //   0xC54 DMA_STATUS RO  [0] busy [1] done [2] error [3] bus master enable
 //                        [6:4] error code (1 no BME, 2 completion status, 3 timeout, 4 arguments)
 //   0xC58 DMA_CYC    RO  user_clk (250 MHz) cycles of the last transfer
-//   0xC5C DMA_DBG    RO
+//   0xC5C DMA_DBG    RO  see ddr_dma.v
+//   0xC60 DMA_CNT    RO  [15:0] RQ beats sent, [31:16] RC beats received (last transfer)
+//   0xC64..0xC6C     RO  descriptor (DW0..2) of the last completion received
+//   0xC70 DMA_STALL  RO  cycles completion data waited for the DDR port
+//   0xC74 TEMP       RO  [15:0] SYSMON die temperature code: C = code * 509.314 / 65536 - 280.231
 //   0xC80 SA_ADDR    RW  byte address (32-byte aligned) for single 32-byte accesses
 //   0xC84 SA_CTRL    W   [0] read  [1] write (SA_DATA -> DDR);  R [0] busy
 //   0xCA0..0xCBC SA_DATA RW  8 x 32 bits (word 0 = lowest address)
 `default_nettype none
 module ddr_ctrl #(
   parameter AW = 26,
-  parameter [7:0] UI_MHZ = 8'd300
+  parameter [15:0] UI_MHZ = 16'd300
 ) (
   input  wire           clk,
   input  wire           rst,
@@ -45,6 +50,7 @@ module ddr_ctrl #(
 
   // status from the ui_clk domain (raw, synchronized here)
   input  wire           calib_raw,
+  input  wire [15:0]    die_temp,     // SYSMON temperature code (quasi-static, other clock)
   input  wire           ui_rst_raw,
   input  wire           mt_busy_raw,
   input  wire [31:0]    mt_errs, mt_wcyc, mt_rcyc, mt_err_addr, mt_err_exp, mt_err_got,
@@ -118,7 +124,8 @@ module ddr_ctrl #(
   wire dma_start = req && we && addr[11:2] == 10'h314 && wdata[0];
   wire dma_busy, dma_done;
   wire [2:0] dma_err;
-  wire [31:0] dma_cyc, dma_dbg;
+  wire [31:0] dma_cyc, dma_dbg, dma_cnt, dma_stall;
+  wire [95:0] dma_rc;
 
   wire          d_cv, d_cwe, d_rpop;
   wire [AW-1:0] d_ca;
@@ -128,6 +135,7 @@ module ddr_ctrl #(
     .start(dma_start), .cfg_dir(wdata[1]), .cfg_host(dma_host), .cfg_ddr(dma_ddr), .cfg_len(dma_len),
     .max_payload(max_payload), .max_read_req(max_read_req), .bme(bme),
     .busy(dma_busy), .done(dma_done), .err(dma_err), .cycles(dma_cyc), .dbg(dma_dbg),
+    .dbg_cnt(dma_cnt), .dbg_rc(dma_rc), .dbg_stall(dma_stall),
     .c_valid(d_cv), .c_ready(c_ready), .c_we(d_cwe), .c_addr(d_ca), .c_wdata(d_cd),
     .r_valid(r_valid), .r_data(r_data), .r_pop(d_rpop),
     .rq_tdata(rq_tdata), .rq_tkeep(rq_tkeep), .rq_tlast(rq_tlast), .rq_tuser(rq_tuser),
@@ -180,7 +188,8 @@ module ddr_ctrl #(
     if (req) case (addr[11:2])
       10'h300: rdata <= {15'd0, sa_st != 2'd0, 1'b0, max_read_req, 2'b00, max_payload,
                          bme, dma_err != 3'd0, dma_done, dma_busy, mt_done, mtb | mt_pend, urst, cal};
-      10'h301: rdata <= {UI_MHZ, 8'd32, 16'd2048};
+      10'h301: rdata <= {8'd0, 8'd32, 16'd2048};
+      10'h303: rdata <= {16'd0, UI_MHZ};
       10'h302: rdata <= {31'd0, ddr_sys_rst};
       10'h304: rdata <= {26'd0, xcfg_mt_mode, 1'b0, xcfg_mt_rd, xcfg_mt_wr, 1'b0};
       10'h305: rdata <= {xcfg_mt_base, 5'd0};
@@ -199,6 +208,12 @@ module ddr_ctrl #(
       10'h315: rdata <= {25'd0, dma_err, bme, dma_err != 3'd0, dma_done, dma_busy};
       10'h316: rdata <= dma_cyc;
       10'h317: rdata <= dma_dbg;
+      10'h318: rdata <= dma_cnt;
+      10'h319: rdata <= dma_rc[31:0];
+      10'h31A: rdata <= dma_rc[63:32];
+      10'h31B: rdata <= dma_rc[95:64];
+      10'h31C: rdata <= dma_stall;
+      10'h31D: rdata <= {16'd0, die_temp};
       10'h320: rdata <= sa_addr;
       10'h321: rdata <= {31'd0, sa_st != 2'd0};
       default: rdata <= (addr[11:5] == 7'b1100101) ? sa_data[32 * addr[4:2] +: 32] : 32'd0;

@@ -151,6 +151,7 @@ module tb_ddr;
           if (dwc * 4 > max_mwr) max_mwr = dwc * 4;
           for (int i = 4; i < 8; i++) begin hmem[w_addr] = rq_tdata[32*i +: 32]; w_addr++; w_dw--; end
           n_mwr = n_mwr + 1;
+          if (n_mwr <= 2) $display("MWr addr %h dwc %0d beat0 %h", {rq_tdata[63:2], 2'b00}, dwc, rq_tdata);
         end else bad_proto = bad_proto + 1;
       end else begin
         for (int i = 0; i < 8; i++)
@@ -234,6 +235,7 @@ module tb_ddr;
 
   integer i, j;
   reg [255:0] w;
+  reg [31:0] ga, ea;
   initial begin
     repeat (20) @(posedge uclk);
     urst <= 0;
@@ -294,10 +296,13 @@ module tb_ddr;
           end
       end
       dma(64'h0000_0000_0008_0000, 32'h0004_0020, 8192, 1);
-      for (j = 0; j < 8192 / 4; j++)
-        if (h_get((32'h8_0000 >> 2) + j) !== h_get((64'h1_0001_0000 >> 2) + j)) begin
-          fails++; if (fails < 10) $display("FAIL c2h dw %0d", j);
+      for (j = 0; j < 8192 / 4; j++) begin
+        ga = h_get(longint'(32'h8_0000 >> 2) + j);
+        ea = h_get(longint'(64'h1_0001_0000 >> 2) + j);
+        if (ga !== ea) begin
+          fails++; if (fails < 10) $display("FAIL c2h dw %0d: got %h exp %h", j, ga, ea);
         end
+      end
       $display("pass %0d: MRd %0d, MWr %0d, max MWr %0d bytes", i, n_mrd, n_mwr, max_mwr);
       for (j = 0; j < 8192 / 4; j++) hmem.delete((32'h8_0000 >> 2) + j);
     end

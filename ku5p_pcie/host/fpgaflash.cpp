@@ -10,6 +10,7 @@
 //   fpgaflash ... erase  OFFSET LEN               (rounded out to sectors)
 //   fpgaflash ... write  FILE [OFFSET]            (erase + program + verify)
 //   fpgaflash ... status                          (registers / link)
+//   fpgaflash ... reboot                          (FPGA reloads itself from flash)
 //   fpgaflash list                                (supported boards present)
 //
 // -d picks a device by PCI address, -b by board; with neither, the single
@@ -41,11 +42,12 @@ struct Board {
   const char* desc;
 };
 constexpr Board kBoards[] = {
-    {"k7", 0x10EE, 0x7021, 0x4B375043, "xc7k325t, PCIe Gen2 x1"},
+    {"k7", 0x10EE, 0x7021, 0x4B375043, "xc7k325t, PCIe Gen2 x1 (k7_pcie, k7_nic)"},
+    {"k7", 0x10EE, 0x7022, 0x4B375043, "xc7k325t, PCIe Gen2 x4 (k7_cap)"},
     {"ku5p", 0x10EE, 0x9021, 0x4B555043, "xcku5p, PCIe4 US+"},
 };
 constexpr uint32_t R_ID = 0x000, R_VER = 0x004, R_STATUS = 0x008, R_CTRL = 0x00C,
-                   R_XFER = 0x010, R_SCRATCH = 0x014, R_LINK = 0x018, R_CSREL = 0x01C, R_FEAT = 0x020,
+                   R_XFER = 0x010, R_SCRATCH = 0x014, R_LINK = 0x018, R_CSREL = 0x01C, R_FEAT = 0x020, R_REBOOT = 0x0FC,
                    R_TX = 0x400, R_RX = 0x800;
 constexpr size_t kBuf = 1024;
 
@@ -93,7 +95,7 @@ Found findDevice(const std::string& bdf, const std::string& boardName) {
   const Board* nb = boardName.empty() ? nullptr : boardByName(boardName);
   std::vector<Found> all = scanDevices(), hit;
   for (const Found& f : all)
-    if ((want.empty() || f.bdf == want) && (!nb || f.board == nb)) hit.push_back(f);
+    if ((want.empty() || f.bdf == want) && (!nb || std::string(f.board->name) == nb->name)) hit.push_back(f);
   if (hit.empty()) {
     if (!want.empty() && !nb) {
       // explicit BDF with an unexpected ID: identify it by the ID register later
@@ -424,9 +426,32 @@ int run(int argc, char** argv) {
     std::snprintf(m, sizeof m, "unexpected ID register %08x at %s (wrong bitstream?)", idreg, dev.bdf.c_str());
     die(m);
   }
-  // FEAT is a newer register; on older K7 bitstreams the address reads as 0.
-  uint32_t feat = bar.rd(R_FEAT);
+  // FEAT exists only in ku5p_pcie; on the K7 designs 0x020 is the 10G status register.
+  uint32_t feat = std::string(dev.board->name) == "ku5p" ? bar.rd(R_FEAT) : 0;
   if (cs < 0 || cs > 1 || (cs == 1 && !(feat & 1))) die("this design has no second flash (-c 1)");
+
+  if (op == "reboot") {
+    if (bar.rd(R_REBOOT) != 0x52425431) die("this bitstream has no REBOOT register (0x0FC)");
+    if (bar.rd(R_STATUS) & 1) die("SPI engine busy, not rebooting");
+    std::string base = "/sys/bus/pci/devices/" + dev.bdf;
+    std::printf("rebooting %s (%s) from flash...\n", dev.bdf.c_str(), dev.board->name);
+    bar.wr(R_REBOOT, 0x424F4F54);  // "BOOT": IPROG, the FPGA reloads from flash address 0
+    // The link drops while the FPGA reconfigures: detach the device, wait, rescan.
+    if (FILE* r = std::fopen((base + "/remove").c_str(), "w")) { std::fputs("1", r); std::fclose(r); }
+    for (int t = 0; t < 30; ++t) {
+      usleep(500000);
+      if (FILE* r = std::fopen("/sys/bus/pci/rescan", "w")) { std::fputs("1", r); std::fclose(r); }
+      if (access((base + "/vendor").c_str(), F_OK) == 0) {
+        std::printf("back after %.1f s: %s %s:%s\n", (t + 1) * 0.5, dev.bdf.c_str(),
+                    readFile1(base + "/vendor").c_str(), readFile1(base + "/device").c_str());
+        if (std::string(dev.board->name) == "ku5p")
+          std::printf("(if BAR reads now return all-ones, warm-reboot the host; seen only after JTAG loads)\n");
+        return 0;
+      }
+    }
+    std::printf("device did not come back within 15 s (link may need a host reboot)\n");
+    return 1;
+  }
 
   if (op == "status") {
     uint32_t l = bar.rd(R_LINK);

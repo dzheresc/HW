@@ -38,7 +38,10 @@ module pcie_cq_pio #(
   output reg  [11:2]         bus_addr,
   output reg  [31:0]         bus_wdata,
   input  wire                bus_ack,
-  input  wire [31:0]         bus_rdata
+  input  wire [31:0]         bus_rdata,
+  output wire [2:0]          dbg_state,
+  output wire [31:0]         dbg_dw0,
+  output wire [31:0]         dbg_dw2
 );
   localparam NDW   = DATA_W / 32;            // DWs per beat
   localparam CBEAT = (4 + NDW - 1) / NDW;    // beats of a completion (3 hdr + 1 data DW)
@@ -63,6 +66,9 @@ module pcie_cq_pio #(
                        (rtype == 4'b0100) || (rtype == 4'b0101) || (rtype == 4'b0110) || is_mrd;
 
   assign cq_tready = (st == S_RX);
+  assign dbg_state = st;
+  assign dbg_dw0 = dw0;
+  assign dbg_dw2 = dw2;
 
   // byte count and lower address for a 1-DW read (PCIe base spec table 2-21)
   reg [2:0] bcnt;

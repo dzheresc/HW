@@ -4,6 +4,7 @@
 // (needs root and no IOMMU, like k7cap).
 //
 //   ku5pddr [-d BDF] status
+//   ku5pddr ... regs                          raw register dump (link, DDR, DMA, single access)
 //   ku5pddr ... memtest [-m MODE|all] [-s SEED] [-w|-r] [BASE LEN]  in-FPGA test, default all 2 GB
 //   ku5pddr ... dmatest [-n MB] [-s SEED]     host writes random data over DMA, reads it back,
 //                                             verifies; reports bandwidth (default all 2 GB)
@@ -160,7 +161,10 @@ class Ddr {
     if (b_.rd(R_ID) != 0x4B555043) die("ID register is not KUPC (wrong design or BAR not working)");
     if (!(b_.rd(R_FEAT) & 4)) die("design has no DDR block (FEAT[2]); load the ku5p_ddr bitstream");
     uint32_t info = b_.rd(D_INFO);
-    uiMHz_ = (info >> 24) ? double(info >> 24) : 300.0;
+    // ui_clk MHz: 0xC0C in newer builds; older ones had an 8-bit field in INFO[31:24] that wrapped 300 to 44
+    uint32_t mhz = b_.rd(0xC0C);
+    (void)info;
+    uiMHz_ = mhz ? double(mhz) : 300.0;
   }
   double uiMHz() const { return uiMHz_; }
   uint32_t st() const { return b_.rd(D_STATUS); }
@@ -216,6 +220,13 @@ class Ddr {
     if (wr) std::printf("write %.2f GB/s  ", len / (wcyc / uiMHz_ * 1e-6) / 1e9);
     if (rdv) std::printf("read+verify %.2f GB/s  ", len / (rcyc / uiMHz_ * 1e-6) / 1e9);
     std::printf("errors %u\n", errs);
+    if (uint32_t tc = b_.rd(0xC74) & 0xFFFF)
+      std::printf("    die temperature %.1f C\n", tc * 509.3140064 / 65536.0 - 280.2308787);
+    // cross-check the ui_clk frequency against wall time (large tests only; ~1 ms polling)
+    double wall = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+    if (wall > 0.2)
+      std::printf("    %.0f ui_clk cycles in %.3f s wall: ui_clk ~%.0f MHz (assumed %.0f)\n",
+                  wcyc + rcyc, wall, (wcyc + rcyc) / wall * 1e-6, uiMHz_);
     if (errs)
       std::printf("    first at 0x%08x: expected 0x%08x got 0x%08x\n", b_.rd(MT_EADDR), b_.rd(MT_EEXP), b_.rd(MT_EGOT));
     return errs;
@@ -255,12 +266,15 @@ void status(const Bar& b) {
   std::printf("link %s, %s GT/s x%d\n", (link >> 15) & 1 ? "up" : "down", gts[(link >> 8) & 3], 1 << ((link >> 12) & 7));
   if (!(b.rd(R_FEAT) & 4)) { std::printf("no DDR block in this design\n"); return; }
   uint32_t s = b.rd(D_STATUS), info = b.rd(D_INFO);
-  std::printf("DDR %u MB, %u-bit, ui_clk %u MHz\n", info & 0xFFFF, (info >> 16) & 0xFF, info >> 24);
+  uint32_t mhz = b.rd(0xC0C);
+  std::printf("DDR %u MB, %u-bit, ui_clk %u MHz\n", info & 0xFFFF, (info >> 16) & 0xFF, mhz ? mhz : 300u);
   std::printf("status 0x%08x: calib %s%s, memtest %s%s, DMA %s%s%s\n", s, s & 1 ? "done" : "NOT done",
               s & 2 ? " (controller in reset)" : "", s & 4 ? "busy" : "idle", s & 8 ? " (done)" : "",
               s & 16 ? "busy" : "idle", s & 64 ? " (last one failed)" : "", s & 128 ? "" : ", bus mastering off");
   static const int mps[] = {128, 256, 512, 1024};
   std::printf("max payload %d B, max read request %d B\n", mps[(s >> 8) & 3], 128 << ((s >> 12) & 7));
+  uint32_t tc = b.rd(0xC74) & 0xFFFF;   // 0 on builds without the temperature register
+  if (tc) std::printf("FPGA die temperature %.1f C\n", tc * 509.3140064 / 65536.0 - 280.2308787);
 }
 
 int usage() {
@@ -280,6 +294,12 @@ int run(int argc, char** argv) {
   std::vector<std::string> a(argv + i, argv + argc);
   Bar bar(findDevice(bdf));
   if (cmd == "status") { status(bar); return 0; }
+  if (cmd == "regs") {   // raw dump of the link and DDR registers
+    for (uint32_t o : {0x018u, 0x024u, 0x028u, 0x02Cu}) std::printf("0x%03x %08x\n", o, bar.rd(o));
+    for (uint32_t o = 0xC00; o < 0xC78; o += 4) std::printf("0x%03x %08x\n", o, bar.rd(o));
+    for (uint32_t o = 0xC80; o < 0xCC0; o += 4) std::printf("0x%03x %08x\n", o, bar.rd(o));
+    return 0;
+  }
   Ddr ddr(bar);
 
   if (cmd == "recal") {

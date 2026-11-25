@@ -33,16 +33,16 @@ module tb;
   wire cq_tready;
   wire [DATA_W-1:0] cc_tdata; wire [NDW-1:0] cc_tkeep; wire cc_tlast, cc_tvalid;
   reg cc_tready = 1;
-  wire req, we, ack; wire [11:2] addr; wire [31:0] wdata, rdata;
+  wire req, we, ack; wire [2:0] pst; wire [31:0] pd0, pd2; wire [11:2] addr; wire [31:0] wdata, rdata;
   wire sck, cs_n, mosi, miso, busy, sel;
   pcie_cq_pio #(.DATA_W(DATA_W)) pio(.clk(clk), .rst(rst),
     .cq_tdata(cq_tdata), .cq_tlast(cq_tlast), .cq_tvalid(cq_tvalid), .cq_tready(cq_tready), .cq_tuser(cq_tuser),
     .cc_tdata(cc_tdata), .cc_tkeep(cc_tkeep), .cc_tlast(cc_tlast), .cc_tvalid(cc_tvalid), .cc_tready(cc_tready),
-    .bus_req(req), .bus_we(we), .bus_addr(addr), .bus_wdata(wdata), .bus_ack(ack), .bus_rdata(rdata));
+    .bus_req(req), .bus_we(we), .bus_addr(addr), .bus_wdata(wdata), .bus_ack(ack), .bus_rdata(rdata), .dbg_state(pst), .dbg_dw0(pd0), .dbg_dw2(pd2));
   spi_regs #(.ID(32'h4B555043), .VERSION(32'h00020000), .FEAT(32'h1), .HALF_RESET(8'd8)) regs(
     .clk(clk), .rst(rst), .req(req), .we(we), .addr(addr), .wdata(wdata), .ack(ack), .rdata(rdata),
     .link_status(32'h0000B21A), .spi_sck(sck), .spi_cs_n(cs_n), .spi_mosi(mosi), .spi_miso(miso),
-    .spi_sel(sel), .busy_o(busy));
+    .spi_sel(sel), .busy_o(busy), .dbg0(32'd0), .dbg1(32'd0), .dbg2(32'd0));
   flash_model fl(.sck(sck), .cs_n(cs_n), .mosi(mosi), .miso(miso));
 
   // collect completion DWs (tkeep-qualified) in order

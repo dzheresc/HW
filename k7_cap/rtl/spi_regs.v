@@ -43,7 +43,8 @@ module spi_regs (
   output reg         spi_cs_n,
   output reg         spi_mosi,
   input  wire        spi_miso,
-  output wire        busy_o
+  output wire        busy_o,
+  output reg         reboot_go = 1'b0   // REBOOT (0x0FC) written with "BOOT"
 );
   reg [7:0]  half;
   reg [31:0] scratch;
@@ -71,12 +72,13 @@ module spi_regs (
   // register reads / writes
   always @(posedge clk) begin
     ack <= req;
+    reboot_go <= req && we && addr[11:2] == 10'h03F && wdata == 32'h424F4F54;
     if (req && we && addr[11:10] == 2'b01) txmem[addr[9:2]] <= wdata;
     if (req) begin
       case (addr[11:10])
         2'b00: case (addr[9:2])
           8'h00: rdata <= 32'h4B375043;
-          8'h01: rdata <= 32'h00040000;   // k7_cap
+          8'h01: rdata <= 32'h00040001;   // k7_cap + REBOOT
           8'h02: rdata <= {30'd0, ~spi_cs_n, busy_o};
           8'h03: rdata <= {24'd0, half};
           8'h05: rdata <= scratch;
@@ -84,6 +86,7 @@ module spi_regs (
           8'h08: rdata <= eth_stat;
           8'h09, 8'h0A, 8'h0B, 8'h0C, 8'h0D, 8'h0E, 8'h0F, 8'h10:
                  rdata <= eth_rates[32*(addr[9:2]-8'h09) +: 32];
+          8'h3F: rdata <= 32'h52425431;   // REBOOT signature "RBT1"
           default: rdata <= 32'd0;
         endcase
         2'b01: rdata <= txmem[addr[9:2]];

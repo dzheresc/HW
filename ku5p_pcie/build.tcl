@@ -32,6 +32,9 @@ report_timing_summary -file build/timing.rpt
 report_utilization -file build/util.rpt
 report_clocks -file build/clocks.rpt
 report_drc -file build/drc.rpt
+set fp [open build/pins.txt w]
+foreach p [lsort [get_ports]] { puts $fp "$p [get_property PACKAGE_PIN $p]" }
+close $fp
 if {$dual} {
   set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 8 [current_design]
 } else {

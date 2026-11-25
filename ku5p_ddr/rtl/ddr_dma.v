@@ -39,6 +39,9 @@ module ddr_dma #(
   output reg  [2:0]     err = 3'd0,    // 1 no BME, 2 bad completion status, 3 timeout, 4 bad args
   output reg  [31:0]    cycles = 32'd0,
   output wire [31:0]    dbg,
+  output reg  [31:0]    dbg_cnt = 32'd0,  // [15:0] RQ beats sent, [31:16] RC beats received (since start)
+  output reg  [95:0]    dbg_rc = 96'd0,   // descriptor of the last RC first beat
+  output reg  [31:0]    dbg_stall = 32'd0, // cycles with RC data waiting on the DDR port (H2C)
 
   // DDR port (ddr_bridge user side)
   output wire           c_valid,
@@ -175,6 +178,10 @@ module ddr_dma #(
     end else begin
       tag_busy <= (tag_busy | t_set) & ~t_clr;
       if (busy) cycles <= cycles + 1'b1;
+      if (rq_tvalid && rq_tready) dbg_cnt[15:0] <= dbg_cnt[15:0] + 1'b1;
+      if (rc_acc) dbg_cnt[31:16] <= dbg_cnt[31:16] + 1'b1;
+      if (rc_acc && rc_first) dbg_rc <= rc_tdata[95:0];
+      if (h_act && rc_tvalid && !rc_tready) dbg_stall <= dbg_stall + 1'b1;
       // timeout: no progress for ~1 s
       if (s_acc || rc_acc || (c_rd && c_ready)) tmo <= 29'd0;
       else if (busy) tmo <= tmo + 1'b1;
@@ -223,6 +230,8 @@ module ddr_dma #(
           done <= 1'b0;
           err <= 3'd0;
           cycles <= 32'd0;
+          dbg_cnt <= 32'd0;
+          dbg_stall <= 32'd0;
           dir <= cfg_dir;
           haddr <= {cfg_host[63:9], 9'd0};
           daddr <= cfg_ddr[AW+4:5];

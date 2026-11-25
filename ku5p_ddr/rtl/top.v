@@ -10,7 +10,7 @@
 module top #(
   parameter LANES  = 8,
   parameter DATA_W = 256,       // must match axisten_if_width in gen_ip.tcl
-  parameter [7:0] UI_MHZ = 8'd300
+  parameter [15:0] UI_MHZ = 16'd300
 ) (
   input  wire              pcie_perst_n,
   input  wire              pcie_refclk_p,
@@ -230,6 +230,8 @@ module top #(
   wire icap_clk;
   BUFG cfgmclk_bufg (.I(cfgmclk), .O(icap_clk));
   fpga_reboot #(.FAMILY("USP")) reboot (.clk(user_clk), .go(reboot_go), .icap_clk(icap_clk), .busy());
+  wire [15:0] die_temp;
+  temp_mon tmon (.dclk(icap_clk), .xst_temp(die_temp));
 
   reg miso0_q;
   always @(posedge user_clk) miso0_q <= sdi[1];
@@ -243,10 +245,11 @@ module top #(
   wire [255:0]  app_wdf_data, app_rd_data;
   wire [31:0]   app_wdf_mask;
   wire          ddr_sys_rst;
+  wire          mig_dbg_clk;   // debug hub clock when the MIG debug is enabled (debug.xdc)
 
   ddr4_0 mig (
     .c0_sys_clk_p(c0_sys_clk_p), .c0_sys_clk_n(c0_sys_clk_n), .sys_rst(ddr_sys_rst),
-    .c0_init_calib_complete(calib), .dbg_clk(), .dbg_bus(),
+    .c0_init_calib_complete(calib), .dbg_clk(mig_dbg_clk), .dbg_bus(),
     .c0_ddr4_adr(c0_ddr4_adr), .c0_ddr4_ba(c0_ddr4_ba), .c0_ddr4_cke(c0_ddr4_cke),
     .c0_ddr4_cs_n(c0_ddr4_cs_n), .c0_ddr4_dm_dbi_n(c0_ddr4_dm_dbi_n), .c0_ddr4_dq(c0_ddr4_dq),
     .c0_ddr4_dqs_c(c0_ddr4_dqs_c), .c0_ddr4_dqs_t(c0_ddr4_dqs_t), .c0_ddr4_odt(c0_ddr4_odt),
@@ -279,7 +282,7 @@ module top #(
   ddr_ctrl #(.AW(AW), .UI_MHZ(UI_MHZ)) regs_ddr (
     .clk(user_clk), .rst(por),
     .req(r_req), .we(r_we), .addr(r_addr), .wdata(r_wdata), .rdata(ddr_rdata),
-    .calib_raw(calib), .ui_rst_raw(ui_rst), .mt_busy_raw(mt_busy),
+    .calib_raw(calib), .ui_rst_raw(ui_rst), .mt_busy_raw(mt_busy), .die_temp(die_temp),
     .mt_errs(mt_errs), .mt_wcyc(mt_wcyc), .mt_rcyc(mt_rcyc),
     .mt_err_addr(mt_err_addr), .mt_err_exp(mt_err_exp), .mt_err_got(mt_err_got),
     .mt_tog(mt_tog), .xcfg_mt_base(mt_base), .xcfg_mt_len(mt_len), .xcfg_mt_wr(mt_wr),
@@ -331,6 +334,22 @@ module top #(
     .app_rd_data(app_rd_data)
   );
 
+
+`ifdef ILA
+  // ILA probes on the MIG application interface (build.tcl ... ila, see ila.tcl)
+  (* mark_debug = "true" *) wire        dbg_app_en      = app_en;
+  (* mark_debug = "true" *) wire        dbg_app_rdy     = app_rdy;
+  (* mark_debug = "true" *) wire        dbg_app_wdf_rdy = app_wdf_rdy;
+  (* mark_debug = "true" *) wire        dbg_app_wren    = app_wdf_wren;
+  (* mark_debug = "true" *) wire        dbg_app_rdv     = app_rd_valid;
+  (* mark_debug = "true" *) wire        dbg_mt_sel      = mt_sel;
+  (* mark_debug = "true" *) wire [2:0]  dbg_app_cmd     = app_cmd;
+  (* mark_debug = "true" *) wire [15:0] dbg_app_addr    = app_addr[15:0];
+  (* mark_debug = "true" *) wire [63:0] dbg_app_wdata   = app_wdf_data[63:0];
+  (* mark_debug = "true" *) wire [63:0] dbg_app_wdata_h = app_wdf_data[255:192];
+  (* mark_debug = "true" *) wire [63:0] dbg_app_rdata   = app_rd_data[63:0];
+  (* mark_debug = "true" *) wire [63:0] dbg_app_rdata_h = app_rd_data[255:192];
+`endif
   // ---------------- LEDs (silkscreen LED2..LED7 = led[0..5]) ----------------
   reg [27:0] hb = 28'd0;
   always @(posedge user_clk) hb <= hb + 28'd1;

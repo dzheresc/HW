@@ -145,3 +145,12 @@ set_property PACKAGE_PIN R22 [get_ports {c0_ddr4_dm_dbi_n[3]}]
 set_false_path -from [get_cells -hier -filter {NAME =~ *xcfg_*}]
 set_false_path -from [get_cells -hier -filter {NAME =~ *xst_*}]
 set_false_path -to   [get_cells -hier -filter {NAME =~ *xs0_*}]
+
+## As in the vendor DDR4 demos (IO_KU5P.xdc): internal VREF on the DDR banks and their
+## I/O standards (the MIG would otherwise use DIFF_SSTL12 for the system clock).
+set_property INTERNAL_VREF 0.6 [get_iobanks 65]
+set_property INTERNAL_VREF 0.6 [get_iobanks 66]
+set_property IOSTANDARD DIFF_POD12_DCI [get_ports {c0_sys_clk_p c0_sys_clk_n}]
+set_property IOSTANDARD POD12_DCI [get_ports {c0_ddr4_dq[*] c0_ddr4_dm_dbi_n[*]}]
+set_property IOSTANDARD DIFF_POD12_DCI [get_ports {c0_ddr4_dqs_t[*] c0_ddr4_dqs_c[*]}]
+set_property IOSTANDARD SSTL12_DCI [get_ports {c0_ddr4_odt[*]}]

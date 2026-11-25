@@ -1,0 +1,11 @@
+# Vivado project (regenerate with scripts/create_project.tcl)
+vivado/
+bin/
+logs/
+*.jou
+*.log
+*.str
+.Xil/
+xsim.dir/
+*.wdb
+*.pb
