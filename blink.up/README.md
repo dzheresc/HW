@@ -1,6 +1,6 @@
 ## set up environment
 
-$ source /opt/Xilinx/Vivado/2017.4/settings64.sh
+$ source /opt/Xilinx/Vivado/2024.2/settings64.sh
 
 ## build bitstream
 
@@ -22,3 +22,6 @@ Vivado%
 $ vivado -mode batch -source prog.tcl -tclargs 0ABC01A build_output/full_project.bit
 
 
+
+
+Vivado 2024.2 rebuild, 2026-11-27 (agentic VM, `timed_build.sh`, one NUMA node, nothing loaded or flashed): build.tcl 3 min 12 s. WNS +4.253 ns, WHS +0.055 ns.

@@ -106,12 +106,13 @@ record byte for byte against the sent frames, skipping exactly the reported drop
 FCS stripped / bad discarded, phase 2 FCS + bad kept, snaplen 128, slow host (ring full,
 1191 drops, all accounted), phase 3 generator at line rate (60 B): no drops. Prints PASS.
 
-## Build and load (Vivado 2017.4; volatile, flash untouched)
+## Build and load (Vivado 2024.2; volatile, flash untouched; the results below were from 2017.4)
 
-    C:\Xilinx\Vivado\2017.4\bin\vivado.bat -mode batch -source gen_ip.tcl     # once
-    C:\Xilinx\Vivado\2017.4\bin\vivado.bat -mode batch -source build.tcl
+    C:\Xilinx\Vivado\2024.2\bin\vivado.bat -mode batch -source upgrade_ip.tcl     # once per checkout: 2017.4 .xci -> 2024.2
+    C:\Xilinx\Vivado\2024.2\bin\vivado.bat -mode batch -source gen_ip.tcl     # once
+    C:\Xilinx\Vivado\2024.2\bin\vivado.bat -mode batch -source build.tcl
     ssh shed 'echo 1 | sudo tee /sys/bus/pci/devices/0000:02:00.0/remove'
-    C:\Xilinx\Vivado\2017.4\bin\vivado.bat -mode batch -source program.tcl -tclargs 192.168.0.215:3121
+    C:\Xilinx\Vivado\2024.2\bin\vivado.bat -mode batch -source program.tcl -tclargs 192.168.0.215:3121
     ssh shed 'echo 1 | sudo tee /sys/bus/pci/rescan'
     ssh shed 'cd k7_cap && sudo ./k7flash status && sudo ./k7cap -t 5 --testgen 60,3 --check'
 
@@ -142,3 +143,16 @@ from flash (IPROG via ICAPE2, rtl/fpga_reboot.v, clocked by STARTUPE2 CFGMCLK). 
 unchanged. Host: `sudo ~/ku5p_pcie/bin/fpgaflash -b k7 reboot` (detaches, waits, rescans; back in 0.5 s).
 Verified: reboot from the factory flash image came back as 10ee:7024; k7_cap then written to flash (2026-11-20) and a reboot from it came back as 10ee:7022 with both SFPs locked. Factory image: C:\develop\k7_flash_backup_2026-11-18.bin. Flash image: build/top.bin
 (SPIx4, 32 MB; copy on oldgamer ~/k7_cap/top_reboot.bin). Pre-change sources: ..\k7_cap_prereboot_backup.
+
+## Vivado 2024.2 rebuild (2026-11-27, flashed)
+`upgrade_ip.tcl` (copied from k7_link) upgrades the 2017.4 `.xci` files: gtwizard 3.6, pcie_7x 3.3, vio 3.0, jtag_axi 1.2.
+`build.tcl` now also writes `build/top.bin` (SPIx4, 32 MB) with `write_cfgmem`. To run both steps on Linux: `./build_2024.sh`
+(19 min on the agentic VM pinned to one NUMA node). Timing met: WNS +0.206 ns, WHS +0.033 ns, 11.1k LUTs, 87.5 BRAM tiles, 0 critical warnings.
+
+Flashed on oldgamer with `fpgaflash -b k7 write ~/k7_cap/build2024/top.bin`, then `reboot`. The card came back as 10ee:7022, Gen2 x4, VER 0x00040001,
+both SFPs locked. The previous flash contents (k7_link) are saved as ~/k7_flash_backup_k7link_2026-11-27.bin.
+- Test generator, 5 s each, `--check`: 60 B gap 3 (14.2 Mpps), 60 B gap 1 (17.4 Mpps), 1514 B gap 1 (9.9 Gb/s).
+  All had 0 drops and 0 sequence errors, and host records == FPGA captured. FIFO peak was at most 341 of 32768 words.
+- Real traffic on SFP A, using the same flooded-ping method as above (static neighbour 192.168.0.111 → 02:4b:37:00:00:6f, 500 × 1000 B pings, `--keep-fcs`):
+  620 frames captured (500 test frames plus other LAN traffic), 0 dropped. All 500 test frames are byte-identical to tcpdump on enp3s0, and every FCS checks out.
+  FPGA timestamps are 23-28 us after oldgamer's TX timestamps.

@@ -3,7 +3,7 @@
   "ip_inst": {
     "xci_name": "jtag_axi_m",
     "component_reference": "xilinx.com:ip:jtag_axi:1.2",
-    "ip_revision": "20",
+    "ip_revision": "21",
     "gen_directory": ".",
     "parameters": {
       "component_parameters": {
@@ -41,12 +41,12 @@
       },
       "runtime_parameters": {
         "IPCONTEXT": [ { "value": "IP_Flow" } ],
-        "IPREVISION": [ { "value": "20" } ],
+        "IPREVISION": [ { "value": "21" } ],
         "MANAGED": [ { "value": "TRUE" } ],
         "OUTPUTDIR": [ { "value": "." } ],
         "SELECTEDSIMMODEL": [ { "value": "" } ],
         "SHAREDDIR": [ { "value": "." } ],
-        "SWVERSION": [ { "value": "2024.2" } ],
+        "SWVERSION": [ { "value": "2024.2.2" } ],
         "SYNTHESISFLOW": [ { "value": "GLOBAL" } ]
       }
     },

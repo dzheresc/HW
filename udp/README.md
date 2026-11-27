@@ -23,7 +23,7 @@ udp/
 
 ## Requirements
 
-- **Vivado**: Version 2017.4
+- **Vivado**: Version 2024.2
 - **FPGA Board**: Artix A7-35 (xc7a35ticsg324-1L)
 - **Ethernet PHY**: GMII-compatible Ethernet PHY chip
 - **Clock**: 125 MHz system clock (for GMII interface)
@@ -40,7 +40,7 @@ udp/
 
 ### 1. Create Vivado Project
 
-Open Vivado 2017.4 and run the TCL script:
+Open Vivado 2024.2 and run the TCL script:
 
 ```tcl
 source create_project.tcl
@@ -247,3 +247,6 @@ Created for Artix A7-35 FPGA development.
   - GMII interface support
   - Fixed target IP and port
 
+
+
+Vivado 2024.2 rebuild, 2026-11-27 (agentic VM, `timed_build.sh`, one NUMA node, nothing loaded or flashed): **does not build yet.** Synthesis failed on the data-dependent `while` loops in both checksum functions. Fixed: two fixed end-around-carry folds (9 words < 2^20). Synthesis now passes, but bitgen stops at DRC: `udp_sender.xdc` has no pin assignments (47 ports unplaced), and the Arty has an MII PHY, not GMII. Use `udp_2` for the Arty.

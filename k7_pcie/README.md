@@ -18,3 +18,6 @@ Load + enumerate (no reboot):
 Tool (on shed: ~/k7_pcie): `sudo ./k7flash info|status`, `read FILE [OFF [LEN]]`,
 `verify FILE [OFF]`, `erase OFF LEN` (rounded out to 64 KB sectors), `write FILE [OFF]` (erase+program+verify).
 Full read ~34 s.
+
+
+Vivado 2024.2 rebuild, 2026-11-27 (agentic VM, `timed_build.sh`, one NUMA node, nothing loaded or flashed): upgrade_ip 25 s (jtag_axi 1.2, pcie_7x 3.3), build 6 min 2 s. WNS +0.857 ns, WHS +0.041 ns, 0 critical warnings.
