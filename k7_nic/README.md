@@ -9,7 +9,7 @@ Merge of `k7_pcie` (PCIe endpoint 10ee:7021, BAR0 flash programmer) and `k7_10g_
 - `host/k7flash.cpp` (on shed: ~/k7_nic) — `status` also prints the 10G status on VERSION >= 2
 
 GTX: PCIe lane 0 on GTXE2_CHANNEL_X0Y3 (quad 115, CPLL, 100 MHz refclk H6/H5);
-SFP A / B on X0Y6 / X0Y7 (quad 116, shared QPLL, 156.25 MHz refclk F6/F5). No shared PLL or refclk.
+SFP A / B on X0Y7 / X0Y6 (RX pins B6 / C4; quad 116, shared QPLL, 156.25 MHz refclk F6/F5). No shared PLL or refclk.
 
 LEDs: 0 heartbeat, 1 PCIe link up, 2 QPLL lock, 3 SFP A block lock, 4 SFP B block lock, 5 SPI busy.
 
