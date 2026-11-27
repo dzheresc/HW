@@ -156,3 +156,13 @@ both SFPs locked. The previous flash contents (k7_link) are saved as ~/k7_flash_
 - Real traffic on SFP A, using the same flooded-ping method as above (static neighbour 192.168.0.111 → 02:4b:37:00:00:6f, 500 × 1000 B pings, `--keep-fcs`):
   620 frames captured (500 test frames plus other LAN traffic), 0 dropped. All 500 test frames are byte-identical to tcpdump on enp3s0, and every FCS checks out.
   FPGA timestamps are 23-28 us after oldgamer's TX timestamps.
+
+## k7cap fixes (2026-11-27, host tool only)
+Tested on the flashed 2024.2 image, which is unchanged.
+- The once-a-second "ring" fill readout compared the FPGA head with a stale consumer position and could show
+  impossible values (above 100%, or a huge number from an unsigned wrap). It now shows what the FPGA sees: 0-100%.
+- A record's drop field saturates at 65535. When the host stalls long enough for a bigger gap (pcap to disk with
+  1514 B at line rate, 256 MB ring), `--check` reported "sequence errors" that were really capped gaps. Such a gap is
+  now consistent and counted as "gaps over 65535 drops". The final line also names the capped records, where it used to
+  put all unreported drops "after the last record". In that run: 0 sequence errors, 29 capped gaps, host records ==
+  FPGA captured.
