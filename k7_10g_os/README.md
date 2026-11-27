@@ -9,10 +9,11 @@
 
 Build and run (PowerShell):
 
-    C:\Xilinx\Vivado\2017.4\bin\vivado.bat -mode batch -source gen_ip.tcl    # only after IP changes
-    C:\Xilinx\Vivado\2017.4\bin\vivado.bat -mode batch -source build.tcl     # ~45 min, synthesis is slow
-    C:\Xilinx\Vivado\2017.4\bin\vivado.bat -mode batch -source program.tcl   # JTAG, volatile, prints status
-    C:\Xilinx\Vivado\2017.4\bin\vivado.bat -mode batch -source program.tcl -tclargs 192.168.0.215:3121 noprog
+    C:\Xilinx\Vivado\2024.2\bin\vivado.bat -mode batch -source upgrade_ip.tcl     # once per checkout: 2017.4 .xci -> 2024.2
+    C:\Xilinx\Vivado\2024.2\bin\vivado.bat -mode batch -source gen_ip.tcl    # only after IP changes
+    C:\Xilinx\Vivado\2024.2\bin\vivado.bat -mode batch -source build.tcl     # ~45 min, synthesis is slow
+    C:\Xilinx\Vivado\2024.2\bin\vivado.bat -mode batch -source program.tcl   # JTAG, volatile, prints status
+    C:\Xilinx\Vivado\2024.2\bin\vivado.bat -mode batch -source program.tcl -tclargs 192.168.0.215:3121 noprog
     # with a VIO command: ... -tclargs 192.168.0.215:3121 noprog "set_ctl vio_rst 1; set_ctl vio_rst 0"
 
 LEDs: 0 heartbeat, 1 QPLL lock, 2 TX+RX reset done, 3 SFP A block lock, 4 SFP B block lock,
@@ -24,3 +25,6 @@ second counts of received idle words, local faults and remote faults. VIO output
 
 Verified 2026-11-18: SFP A (DAC to the switch) and SFP B (loopback plug) both block-locked,
 ~156.25 M idle words/s, zero faults, zero errors; the switch shows SFP1 link at 10G.
+
+Rebuild 2026-11-27 (Vivado 2024.2, agentic VM): `upgrade_ip.tcl` upgrades the 2017.4 IP (gtwizard 3.6, vio 3.0), 26 s, then `build.tcl`, 15 min
+(was ~45 min in 2017.4 on the Dell). Timing met: WNS +0.966 ns, WHS +0.044 ns. 4.9k LUTs, 0 critical warnings. `build.tcl` writes no flash .bin. Not loaded.

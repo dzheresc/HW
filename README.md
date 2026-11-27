@@ -19,9 +19,10 @@ host tools, simulation. To reuse one, copy its folder; nothing is shared between
 
 ## Toolchain
 
-- **Vivado 2024.2 for all new work.** 2017.4 is only named where an older project was last built with it.
-  The K7 projects other than `k7_link` hold 2017.4 `.xci` files. To move one to 2024.2, run its IP through
-  `upgrade_ip` first (see `k7_link/upgrade_ip.tcl`). KU5P projects need the UltraScale+ devices installed.
+- **Vivado 2024.2 for everything.** Every Vivado project here built with 2024.2 on 2026-11-27. 2017.4 is only named in past results.
+  K7 projects with IP have an `upgrade_ip.tcl`: run it once per checkout before `build.tcl` (2017.4 `.xci` files go to 2024.2).
+  KU5P projects need the UltraScale+ devices installed. Project-mode folders (create_project.tcl only) build with `../proj_build.tcl`.
+  `timed_build.sh <dir> 2024.2 <numa node> <steps...>` runs and times the steps; `build_queue.sh` rebuilds all.
 - Verilog for designs, SystemVerilog only in some testbenches. Host tools are C++ for Linux.
 - Build outputs (bitstreams, checkpoints, reports, generated IP) are not committed.
 
@@ -86,7 +87,7 @@ are patched locally, as noted in the project READMEs.
 
 ## Legacy
 
-Earlier projects, built with Vivado 2017.4 project-mode scripts (`create_project.tcl`).
+Earlier projects with Vivado project-mode scripts (`create_project.tcl`). They were written for 2017.4 and build with 2024.2.
 
 - `blink/` - 1 Hz LED blinker for the Arty A7-35 (xc7a35t)
 - `blink.up/` - LED blinker for the KU5P board (xcku5p-ffvb676-2-i), differential system clock, non-project build and JTAG program scripts

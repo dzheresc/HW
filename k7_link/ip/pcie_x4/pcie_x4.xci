@@ -3,7 +3,7 @@
   "ip_inst": {
     "xci_name": "pcie_x4",
     "component_reference": "xilinx.com:ip:pcie_7x:3.3",
-    "ip_revision": "22",
+    "ip_revision": "23",
     "gen_directory": ".",
     "parameters": {
       "component_parameters": {
@@ -480,12 +480,12 @@
       },
       "runtime_parameters": {
         "IPCONTEXT": [ { "value": "IP_Flow" } ],
-        "IPREVISION": [ { "value": "22" } ],
+        "IPREVISION": [ { "value": "23" } ],
         "MANAGED": [ { "value": "TRUE" } ],
         "OUTPUTDIR": [ { "value": "." } ],
         "SELECTEDSIMMODEL": [ { "value": "" } ],
         "SHAREDDIR": [ { "value": "." } ],
-        "SWVERSION": [ { "value": "2024.2" } ],
+        "SWVERSION": [ { "value": "2024.2.2" } ],
         "SYNTHESISFLOW": [ { "value": "GLOBAL" } ]
       }
     },

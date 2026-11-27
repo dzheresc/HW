@@ -114,8 +114,10 @@ module udp_sender (
             sum = ver_ihl_tos + total_length + identification + flags_fragment +
                   ttl_protocol + source_ip_high + source_ip_low + 
                   dest_ip_high + dest_ip_low;
-            while (sum[31:16] != 0)
-                sum = sum[31:16] + sum[15:0];
+            // 9 x 16-bit words < 2^20: two end-around-carry folds always suffice
+            // (a data-dependent while loop does not synthesize in Vivado 2024.2)
+            sum = sum[31:16] + sum[15:0];
+            sum = sum[31:16] + sum[15:0];
             calc_ip_checksum = ~sum[15:0];
         end
     endfunction
@@ -136,8 +138,10 @@ module udp_sender (
             sum = source_ip_high + source_ip_low + dest_ip_high + dest_ip_low +
                   protocol + udp_length + source_port + dest_port + 
                   udp_length_dup;
-            while (sum[31:16] != 0)
-                sum = sum[31:16] + sum[15:0];
+            // 9 x 16-bit words < 2^20: two end-around-carry folds always suffice
+            // (a data-dependent while loop does not synthesize in Vivado 2024.2)
+            sum = sum[31:16] + sum[15:0];
+            sum = sum[31:16] + sum[15:0];
             calc_udp_checksum = ~sum[15:0];
         end
     endfunction

@@ -27,7 +27,7 @@ udp_2/
 
 - **Board**: Arty A7-35 (Artix-7 FPGA)
 - **Ethernet PHY**: SMSC LAN8710A (on-board)
-- **Vivado Version**: 2017.4
+- **Vivado Version**: 2024.2
 - **FPGA Part**: xc7a35ticsg324-1L
 
 ## Features
@@ -53,7 +53,7 @@ udp_2/
 
 ### 1. Create Vivado Project
 
-Open Vivado 2017.4 and run the TCL script:
+Open Vivado 2024.2 and run the TCL script:
 
 ```tcl
 cd C:/temp/HW/udp_2
@@ -234,3 +234,6 @@ This project is provided as-is for educational and development purposes.
 - [IEEE 802.3 Ethernet Standard](https://standards.ieee.org/standard/802_3-2018.html)
 - [RFC 768 - UDP Protocol](https://tools.ietf.org/html/rfc768)
 
+
+
+Vivado 2024.2 rebuild, 2026-11-27 (agentic VM, `timed_build.sh`, one NUMA node, nothing loaded or flashed): `../proj_build.tcl` 2 min 51 s. WNS +8.148 ns, WHS +0.283 ns, 0 critical warnings.

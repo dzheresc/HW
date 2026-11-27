@@ -57,3 +57,6 @@ fitted to other Arty A7 revisions, so it works unchanged on those.
 Change `part` in `scripts/create_project.tcl`, swap the XDC, and set `CLK_HZ`
 to the board clock. For example Cmod A7-35T: part `xc7a35tcpg236-1`,
 12 MHz clock on L17, LEDs on A17 and C16, buttons on A18 and B18.
+
+
+Vivado 2024.2 rebuild, 2026-11-27 (agentic VM, `timed_build.sh`, one NUMA node, nothing loaded or flashed): scripts/build.tcl 2 min 57 s. WNS +5.523 ns, WHS +0.217 ns.

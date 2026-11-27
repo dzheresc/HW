@@ -27,7 +27,8 @@ BAR0 (read-only): port A at 0x200, port B at 0x240: +00 rx good, +04 bad FCS, +0
     sh sim/run_sim.sh                                                       # prints PASS
     C:\Xilinx\Vivado\2024.2\bin\vivado.bat -mode batch -source build.tcl    # build/top.bit, build/top.bin
 
-`ip/*.xci` came from k7_cap (2017.4) and were upgraded once with `upgrade_ip.tcl`.
+`ip/*.xci` came from k7_cap (2017.4) and were upgraded once with `upgrade_ip.tcl`. Rerun it if Vivado reports a read-only `generate_synth_checkpoint`
+(the IP revision differs between 2024.2 installs: rev 22 on Windows, rev 23 on Linux).
 
 ## Test
 
@@ -50,3 +51,6 @@ Volatile (JTAG, flash untouched; a `fpgaflash -b k7 reboot` or power cycle retur
 
 To flash instead: `sudo ~/ku5p_pcie/bin/fpgaflash -b k7 write ~/k7_link/top.bin`, then `... -b k7 reboot`.
 Back to capture: write `~/k7_cap/top_reboot.bin` the same way.
+
+
+Vivado 2024.2 rebuild, 2026-11-27 (agentic VM, `timed_build.sh`, one NUMA node, nothing loaded or flashed): upgrade_ip 32 s (IP rev 22 -> 23), build 23 min 40 s. WNS +0.371 ns, WHS +0.032 ns, 12.6k LUTs, 0 critical warnings.
