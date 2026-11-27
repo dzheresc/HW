@@ -75,6 +75,11 @@ Kintex UltraScale+ KU5P:
 - `ku5p_ddr/` - x8 card: DDR4 memory test and host DMA over PCIe, C++ test tool (status in its README)
 - `ku5pf_ddr/` - RK-XCKU5P-F: DDR4 test over JTAG
 
+Host tools (no FPGA design):
+- `rdma-rtt/` - TCP/UDP/RDMA RTT benchmark, overload and tuning tests on the zlab-oldgamer 25G links; `echo10g` for
+  the K7 10G echo and capture tests
+- `fpga-rdma/` - software RoCE v2 RDMA READ requester (a model of a future FPGA engine), RNIC responder, golden capture
+
 Arty A7-35T:
 - `arty_blink/` - LED blinker with self-checking testbench and flash script (2024.2)
 

@@ -1,0 +1,98 @@
+{
+ "params": {
+  "addr": 130714460917760,
+  "rkey": 2063997,
+  "len": 65536,
+  "psn": 1193046,
+  "qpn0": 2931,
+  "peer_qpn0": 17,
+  "qpn1": 2932,
+  "peer_qpn1": 18
+ },
+ "src_ip": "10.26.0.1",
+ "dst_ip": "10.26.0.2",
+ "src_mac": "b8:ce:f6:3e:a5:89",
+ "dst_mac": "b8:ce:f6:21:26:c9",
+ "results": [
+  [
+   "read_off0_len8",
+   true,
+   "0x10/psn0x123456/8B/syn0x0"
+  ],
+  [
+   "read_off64_len64",
+   true,
+   "0x10/psn0x123457/64B/syn0x0"
+  ],
+  [
+   "read_off0_len1024",
+   true,
+   "0x10/psn0x123458/1024B/syn0x0"
+  ],
+  [
+   "read_off0_len1025",
+   true,
+   "0x0d/psn0x123459/1024B/syn0x0 0x0f/psn0x12345a/1B/syn0x0"
+  ],
+  [
+   "read_off100_len7",
+   true,
+   "0x10/psn0x12345b/7B/syn0x0"
+  ],
+  [
+   "read_off3_len1",
+   true,
+   "0x10/psn0x12345c/1B/syn0x0"
+  ],
+  [
+   "read_off128_len4096",
+   true,
+   "0x0d/psn0x12345d/1024B/syn0x0 0x0e/psn0x12345e/1024B 0x0e/psn0x12345f/1024B 0x0f/psn0x123460/1024B/syn0x0"
+  ],
+  [
+   "read_off1_len3001",
+   true,
+   "0x0d/psn0x123461/1024B/syn0x0 0x0e/psn0x123462/1024B 0x0f/psn0x123463/953B/syn0x0"
+  ],
+  [
+   "read_off0_len16384",
+   true,
+   "16 packets"
+  ],
+  [
+   "duplicate_request",
+   true,
+   "0x10/psn0x123474/64B/syn0x0"
+  ],
+  [
+   "bad_icrc_dropped",
+   true,
+   "no reply"
+  ],
+  [
+   "psn_gap_nak",
+   true,
+   "0x11/psn0x123475/0B/syn0x60"
+  ],
+  [
+   "resume_after_nak",
+   true,
+   "0x10/psn0x123475/512B/syn0x0"
+  ],
+  [
+   "window_4x4096",
+   true,
+   "16 packets"
+  ],
+  [
+   "partial_reissue",
+   false,
+   "0x0e/psn0x123488/1024B 0x0f/psn0x123489/1024B/syn0x0"
+  ],
+  [
+   "bad_rkey_nak",
+   true,
+   "0x11/psn0x123456/0B/syn0x62"
+  ]
+ ]
+}
