@@ -14,7 +14,7 @@ The design captures 4-bit data from the MII Ethernet receive interface (`eth_rxd
 - **Interface**: MII (Media Independent Interface)
 
 ### Software
-- **Vivado**: 2017.4 or compatible version
+- **Vivado**: 2024.2
 - **Target Part**: xc7a35ticsg324-1L (Arty A7-35)
 
 ## Project Structure
@@ -58,14 +58,14 @@ Pin constraints file defining:
 - Clock constraints for `eth_rx_clk` (25 MHz, 40 ns period)
 
 ### `create_project.tcl`
-TCL script for Vivado 2017.4 that:
+TCL script for Vivado 2024.2 that:
 - Creates a new Vivado project with correct part number
 - Adds all source and constraint files
 - Sets the top-level module
 - Configures project settings
 
 ### `build_project.tcl`
-TCL script for Vivado 2017.4 that:
+TCL script for Vivado 2024.2 that:
 - Opens the project
 - Runs synthesis
 - Runs implementation
@@ -103,7 +103,7 @@ The easiest way to set up and build the project is using the provided TCL script
 
 #### Method 1: Using Vivado GUI
 
-1. Open Vivado 2017.4
+1. Open Vivado 2024.2
 2. In the TCL console, navigate to the project directory:
    ```tcl
    cd <path_to_eth_recv>
@@ -174,10 +174,13 @@ Alternatively, you can set up the project manually:
 - LEDs display the raw received data bits - this is useful for debugging and monitoring Ethernet traffic
 - The Ethernet PHY must be properly configured and initialized (handled by keeping `eth_rstn` high)
 - This is a simple demonstration design - for actual Ethernet communication, you would need additional logic to parse Ethernet frames
-- The TCL scripts are designed for Vivado 2017.4 but should work with newer versions
+- The TCL scripts were written for Vivado 2017.4 and build unchanged in 2024.2
 - If using a different Vivado version, you may need to adjust the TCL scripts accordingly
 
 ## License
 
 This project is provided as-is for educational and demonstration purposes.
 
+
+
+Vivado 2024.2 rebuild, 2026-11-27 (agentic VM, `timed_build.sh`, one NUMA node, nothing loaded or flashed): `../proj_build.tcl` 2 min 53 s. WNS +8.288 ns, WHS +0.247 ns. 1 critical warning: the master XDC names `eth_rxerr`, which is not a port.

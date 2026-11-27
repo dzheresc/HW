@@ -27,7 +27,8 @@ BAR0 (read-only): port A at 0x200, port B at 0x240: +00 rx good, +04 bad FCS, +0
     sh sim/run_sim.sh                                                       # prints PASS
     C:\Xilinx\Vivado\2024.2\bin\vivado.bat -mode batch -source build.tcl    # build/top.bit, build/top.bin
 
-`ip/*.xci` came from k7_cap (2017.4) and were upgraded once with `upgrade_ip.tcl`.
+`ip/*.xci` came from k7_cap (2017.4) and were upgraded once with `upgrade_ip.tcl`. Rerun it if Vivado reports a read-only `generate_synth_checkpoint`
+(the IP revision differs between 2024.2 installs: rev 22 on Windows, rev 23 on Linux).
 
 ## Test
 
@@ -40,11 +41,14 @@ Load: `sudo ping -f -s 1472 10.10.0.1`. Counters on the shed PC: `sudo ~/k7_link
 
 Built 2026-11-25 (2024.2): WNS +0.418 ns, WHS +0.040 ns, 12.6k LUTs, 24.5 BRAM. Simulation PASS.
 
-Port B on hardware (2026-11-25, 10G host at 10.10.0.2 over the DAC; ARP reports 02:4b:37:00:01:01):
-- ping flood: 6,095,472 of 6,095,472 answered (56 B and 1472 B)
-- UDP echo, 1472 B at line rate for 300 s: 250 of 243,187,000 frames not returned (cause not found: PC to FPGA
-  bit errors or an FPGA FIFO overflow both fit). Smaller sizes were limited by the PC.
-Port A is not tested here.
+Run on hardware 2026-11-27 (the 2024.2 rebuild loaded by JTAG on oldgamer; SFP B only, from zlab
+ens6; counters from `k7link`):
+- 20 pings to 10.10.0.1: 20 replies, plus 1 ARP reply (21 frames sent).
+- 20 pings to another MAC: counted as received, not answered.
+- 1 625 404 frames of 1514 B at 9.84 Gb/s (zlab `echo10g`, 2 s): "rx good" rose by exactly
+  1 625 404, with 0 bad FCS and 0 FIFO drops.
+
+SFP A was not tested.
 
 ## Load
 
@@ -56,3 +60,6 @@ Volatile (JTAG, flash untouched; a `fpgaflash -b k7 reboot` or power cycle retur
 
 To flash instead: `sudo ~/ku5p_pcie/bin/fpgaflash -b k7 write ~/k7_link/top.bin`, then `... -b k7 reboot`.
 Back to capture: write `~/k7_cap/top_reboot.bin` the same way.
+
+
+Vivado 2024.2 rebuild, 2026-11-27 (agentic VM, `timed_build.sh`, one NUMA node, nothing loaded or flashed): upgrade_ip 32 s (IP rev 22 -> 23), build 23 min 40 s. WNS +0.371 ns, WHS +0.032 ns, 12.6k LUTs, 0 critical warnings.

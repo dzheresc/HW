@@ -9,7 +9,7 @@ Merge of `k7_pcie` (PCIe endpoint 10ee:7021, BAR0 flash programmer) and `k7_10g_
 - `host/k7flash.cpp` (on shed: ~/k7_nic) — `status` also prints the 10G status on VERSION >= 2
 
 GTX: PCIe lane 0 on GTXE2_CHANNEL_X0Y3 (quad 115, CPLL, 100 MHz refclk H6/H5);
-SFP A / B on X0Y6 / X0Y7 (quad 116, shared QPLL, 156.25 MHz refclk F6/F5). No shared PLL or refclk.
+SFP A / B on X0Y7 / X0Y6 (RX pins B6 / C4; quad 116, shared QPLL, 156.25 MHz refclk F6/F5). No shared PLL or refclk.
 
 LEDs: 0 heartbeat, 1 PCIe link up, 2 QPLL lock, 3 SFP A block lock, 4 SFP B block lock, 5 SPI busy.
 
@@ -21,11 +21,12 @@ BAR0 registers: as k7_pcie (ID 0x4B375043, VERSION now 0x00020000), plus
   0x02C/0x030/0x034 SFP A idle / local-fault / remote-fault words per second, 0x038/0x03C/0x040 SFP B
   (rates update once a second)
 
-Build and load (PowerShell, Vivado 2017.4):
+Build and load (PowerShell, Vivado 2024.2):
 
-    C:\Xilinx\Vivado\2017.4\bin\vivado.bat -mode batch -source build.tcl
+    C:\Xilinx\Vivado\2024.2\bin\vivado.bat -mode batch -source upgrade_ip.tcl     # once per checkout: 2017.4 .xci -> 2024.2
+    C:\Xilinx\Vivado\2024.2\bin\vivado.bat -mode batch -source build.tcl
     ssh shed 'echo 1 | sudo tee /sys/bus/pci/devices/0000:02:00.0/remove'
-    C:\Xilinx\Vivado\2017.4\bin\vivado.bat -mode batch -source program.tcl -tclargs 192.168.0.215:3121
+    C:\Xilinx\Vivado\2024.2\bin\vivado.bat -mode batch -source program.tcl -tclargs 192.168.0.215:3121
     ssh shed 'echo 1 | sudo tee /sys/bus/pci/rescan'
     ssh shed 'cd k7_nic && sudo ./k7flash status && sudo ./k7flash info'
 
@@ -40,3 +41,6 @@ JTAG scripts pick the hw_server target that holds the xc7k325t (open_k7.tcl), so
 Write path verified the same day (Denis ran it on oldgamer): program+verify of a random pattern at
 0x1D0000-0x1FFFFF (192 KiB in 0.8 s), erase back to blank + verify, full 32 MB verify vs backup OK,
 links still up and fault-free afterwards.
+
+
+Vivado 2024.2 rebuild, 2026-11-27 (agentic VM, `timed_build.sh`, one NUMA node, nothing loaded or flashed): upgrade_ip 32 s (gtwizard 3.6, jtag_axi 1.2, pcie_7x 3.3, vio 3.0), build 16 min 33 s. WNS +0.990 ns, WHS +0.041 ns, 0 critical warnings.

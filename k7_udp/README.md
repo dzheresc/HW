@@ -48,11 +48,12 @@ VERSION is 0x00030000. UDP registers (byte offsets):
 | 0x0A8 | COUNT_HI   | RO |
 | 0x0AC | UDP_STAT   | RO [15:0] ARP failures, [31:16] good frames received on SFP A (16-bit wrap) |
 
-Build and load (Vivado 2017.4; volatile, flash untouched):
+Build and load (Vivado 2024.2; volatile, flash untouched):
 
-    C:\Xilinx\Vivado\2017.4\bin\vivado.bat -mode batch -source build.tcl
+    C:\Xilinx\Vivado\2024.2\bin\vivado.bat -mode batch -source upgrade_ip.tcl     # once per checkout: 2017.4 .xci -> 2024.2
+    C:\Xilinx\Vivado\2024.2\bin\vivado.bat -mode batch -source build.tcl
     ssh shed 'echo 1 | sudo tee /sys/bus/pci/devices/0000:02:00.0/remove'
-    C:\Xilinx\Vivado\2017.4\bin\vivado.bat -mode batch -source program.tcl -tclargs 192.168.0.215:3121
+    C:\Xilinx\Vivado\2024.2\bin\vivado.bat -mode batch -source program.tcl -tclargs 192.168.0.215:3121
     ssh shed 'echo 1 | sudo tee /sys/bus/pci/rescan'
     ssh shed 'cd k7_udp && sudo ./k7flash status && sudo ./k7flash udp'
     ssh shed 'sudo tcpdump -i enp3s0 -n -X -c 5 udp port 5000'
@@ -65,3 +66,6 @@ UDP length 8, payload counting up by 1 (e.g. 00..16, 00..17, 00..18), arrival sp
 ± 10 µs. Both SFPs stay block-locked with zero faults. The first one or two counter values
 after a load can be lost (one ARP failure while the switch port comes up). oldgamer answers
 with ICMP port unreachable unless something listens on UDP 5000 (e.g. `nc -ul 5000`).
+
+
+Vivado 2024.2 rebuild, 2026-11-27 (agentic VM, `timed_build.sh`, one NUMA node, nothing loaded or flashed): upgrade_ip 33 s (gtwizard 3.6, jtag_axi 1.2, pcie_7x 3.3, vio 3.0), build 23 min 3 s. WNS +0.624 ns, WHS +0.041 ns, 0 critical warnings.

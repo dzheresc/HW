@@ -63,6 +63,13 @@ enum : uint8_t { F_BAD = 1, F_TRUNC = 2, F_FCS = 4, F_ABORT = 8 };
   throw std::runtime_error(m + (errno ? std::string(": ") + std::strerror(errno) : ""));
 }
 
+// Where the drops not carried by records went: after the last record, or above the 65535
+// that a record's drop field holds (it saturates).
+std::string cappedNote(uint64_t capped) {
+  if (!capped) return "after the last record";
+  return "after the last record or beyond the 65535 cap in " + std::to_string(capped) + " records";
+}
+
 std::string readLine(const std::string& p) {
   FILE* f = std::fopen(p.c_str(), "r");
   if (!f) return "";
@@ -332,8 +339,8 @@ void onSignal(int) { g_stop = true; }
 
 // ---------------- receive thread ----------------
 struct RxStats {
-  std::atomic<uint64_t> records{0}, bytes{0}, wireBytes{0}, drops{0}, bad{0}, trunc{0};
-  std::atomic<uint64_t> seqErrors{0}, chunkWaits{0}, tail{0};
+  std::atomic<uint64_t> records{0}, bytes{0}, wireBytes{0}, drops{0}, dropsCapped{0}, bad{0}, trunc{0};
+  std::atomic<uint64_t> seqErrors{0}, seqSaturated{0}, chunkWaits{0}, tail{0};
 };
 
 struct Rx {
@@ -403,7 +410,11 @@ struct Rx {
         if (o.check && clen >= 24) {
           uint64_t seq;
           copyOut(reinterpret_cast<uint8_t*>(&seq), tail + 16 + 16, 8);
-          if (haveSeq && seq != nextSeq + drops) st.seqErrors++;
+          if (haveSeq && seq != nextSeq + drops) {
+            // the record's drop field saturates at 65535: a longer gap is consistent with it
+            if (drops == 0xFFFF && seq - nextSeq >= 0xFFFF) st.seqSaturated++;
+            else st.seqErrors++;
+          }
           nextSeq = seq + 1;
           haveSeq = true;
         }
@@ -411,6 +422,7 @@ struct Rx {
         st.bytes.fetch_add(clen, std::memory_order_relaxed);
         st.wireBytes.fetch_add(wlen, std::memory_order_relaxed);
         if (drops) st.drops.fetch_add(drops, std::memory_order_relaxed);
+        if (drops == 0xFFFF) st.dropsCapped.fetch_add(1, std::memory_order_relaxed);
         if (flags & F_BAD) st.bad.fetch_add(1, std::memory_order_relaxed);
         if (flags & F_TRUNC) st.trunc.fetch_add(1, std::memory_order_relaxed);
         tail += rlen;
@@ -418,6 +430,7 @@ struct Rx {
         if (tail - lastTailWr >= ringSize / 8) {   // return space early on long bursts
           bar.wr(C_TAIL, uint32_t(tail));
           lastTailWr = tail;
+          st.tail.store(tail, std::memory_order_relaxed);   // keeps the ring fill display <= 100%
         }
         if (o.count && st.records.load(std::memory_order_relaxed) >= o.count) g_stop = true;
       }
@@ -534,13 +547,15 @@ int main(int argc, char** argv) {
         int64_t b1 = nowNs();
         if (tsn - ts0 > 100000000) g_tickNs = double(a1 + (b1 - a1) / 2 - t0ns) / double(tsn - ts0);
         uint64_t r = st.records, by = st.bytes, wb = st.wireBytes;
+        // tail first: the consumer never passes the FPGA head, so head - tail cannot wrap
+        uint64_t tail = st.tail.load();
         uint64_t head = bar.rd64(C_HEAD);
         if (!o.quiet)
           std::fprintf(info, "%6.0fs  %9.0f pkt/s %7.3f Gbit/s (wire %7.3f)  recs %llu drops %llu (fpga %llu) bad %llu  ring %4.1f%%  backlog %zu\n",
                        el, (r - lastRec) / dt, (by - lastBytes) * 8e-9 / dt, (wb - lastWire) * 8e-9 / dt,
                        (unsigned long long)r, (unsigned long long)st.drops.load(),
                        (unsigned long long)bar.rd64(C_DROP_FRAMES), (unsigned long long)st.bad.load(),
-                       100.0 * double(head - st.tail.load()) / double(ringSize), w.backlog());
+                       100.0 * double(head > tail ? head - tail : 0) / double(ringSize), w.backlog());
         lastRec = r; lastBytes = by; lastWire = wb; last = now;
       }
     }
@@ -567,12 +582,13 @@ int main(int argc, char** argv) {
                  (unsigned long long)st.bad.load(), (unsigned long long)st.trunc.load(),
                  (unsigned long long)st.chunkWaits.load(), (unsigned long long)(w.written() + (w.enabled() ? 24 : 0)));
     printFpga(bar, info);
-    if (o.tg) std::fprintf(info, "testgen: generated %llu, sequence errors %llu\n",
-                           (unsigned long long)bar.rd64(C_TG_SEQ), (unsigned long long)st.seqErrors.load());
+    if (o.tg) std::fprintf(info, "testgen: generated %llu, sequence errors %llu, gaps over 65535 drops %llu\n",
+                           (unsigned long long)bar.rd64(C_TG_SEQ), (unsigned long long)st.seqErrors.load(),
+                           (unsigned long long)st.seqSaturated.load());
     bool ok = st.records.load() == fCap;
-    std::fprintf(info, "%s: host records %s FPGA captured; FPGA dropped %llu (%llu reported inside records, the rest after the last record)\n",
+    std::fprintf(info, "%s: host records %s FPGA captured; FPGA dropped %llu (%llu reported inside records, the rest %s)\n",
                  ok ? "OK" : "MISMATCH", ok ? "==" : "!=", (unsigned long long)fDrop,
-                 (unsigned long long)st.drops.load());
+                 (unsigned long long)st.drops.load(), cappedNote(st.dropsCapped.load()).c_str());
     bar.wr(C_CTRL, CTRL_RESET);
     return ok && st.seqErrors.load() == 0 ? 0 : 1;
   } catch (const std::exception& e) {

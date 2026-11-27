@@ -29,3 +29,6 @@ Built 2026-11-21: WNS +0.464 ns, WHS +0.011 ns. The last load attempt of this de
 on JTAG, so this folder has no recorded hardware result. The same memory setup (MIG 2024.2,
 MT40A512M16LY-075 at 2400 MT/s, same DDR pins) passed on this board in the `rk_xcku5p_f_ddr4` project
 of the separate `squeeze` repository: 0 errors over 2 GB, 7.69 GB/s write, 8.91 GB/s read.
+
+
+Vivado 2024.2 rebuild, 2026-11-27 (agentic VM, `timed_build.sh`, one NUMA node, nothing loaded or flashed): gen_ip 1 min 17 s, build 16 min 2 s. WNS +0.336 ns, WHS +0.013 ns, 0 critical warnings.

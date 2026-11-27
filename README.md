@@ -13,15 +13,17 @@ host tools, simulation. To reuse one, copy its folder; nothing is shared between
 | Send UDP from the FPGA | `k7_udp` |
 | PCIe endpoint with BAR0 registers, flash over PCIe | `k7_pcie` (K7, Gen2 x1), `k7_cap` (K7, Gen2 x4), `ku5p_pcie` (KU5P) |
 | DMA to host memory | `k7_cap` (K7), `ku5p_ddr` (KU5P) |
+| 10G packet capture into host hugepages (pcap, pcapng) | `k7_cap` (SFP A), `k7_cap_ab` (both SFP+ cages) |
 | DDR4 memory test | `ku5p_ddr` (PCIe), `ku5pf_ddr` (JTAG only) |
 | Reload the FPGA from flash by a register write | `rtl/fpga_reboot.v` in `k7_cap`, `k7_link`, `ku5p_pcie` |
 | Flash tool for the K7 and KU5P cards | `ku5p_pcie/host/fpgaflash.cpp` |
 
 ## Toolchain
 
-- **Vivado 2024.2 for all new work.** 2017.4 is only named where an older project was last built with it.
-  The K7 projects other than `k7_link` hold 2017.4 `.xci` files. To move one to 2024.2, run its IP through
-  `upgrade_ip` first (see `k7_link/upgrade_ip.tcl`). KU5P projects need the UltraScale+ devices installed.
+- **Vivado 2024.2 for everything.** Every Vivado project here built with 2024.2 on 2026-11-27. 2017.4 is only named in past results.
+  K7 projects with IP have an `upgrade_ip.tcl`: run it once per checkout before `build.tcl` (2017.4 `.xci` files go to 2024.2).
+  KU5P projects need the UltraScale+ devices installed. Project-mode folders (create_project.tcl only) build with `../proj_build.tcl`.
+  `timed_build.sh <dir> 2024.2 <numa node> <steps...>` runs and times the steps; `build_queue.sh` rebuilds all.
 - Verilog for designs, SystemVerilog only in some testbenches. Host tools are C++ for Linux.
 - Build outputs (bitstreams, checkpoints, reports, generated IP) are not committed.
 
@@ -66,9 +68,10 @@ Kintex-7 xc7k325t:
 - `k7_nic/` - PCIe plus 10G on both cages combined
 - `k7_udp/` - 1 Hz UDP counter sender over 10G, controlled through BAR0
 - `k7_cap/` - 10G packet capture: SFP A to a host hugepage ring by DMA over PCIe Gen2 x4, C++ pcap tool
-- `k7_link/` - dual-port 10G test: replies to ARP, ping and UDP echo on both SFP+ ports (2024.2; simulated and
-  built; port B runs on hardware, see its README)
-- `k7_host_ram/` - host RAM as random-access FPGA memory over PCIe (built and simulated, not yet run on hardware)
+- `k7_cap_ab/` - k7_cap with both SFP+ cages captured into one hugepage ring (port in every record, one pcapng
+  interface per cage); flash programmer and REBOOT kept (2024.2; verified on hardware by JTAG load)
+- `k7_link/` - dual-port 10G test: replies to ARP, ping and UDP echo on both SFP+ ports (2024.2; SFP B verified
+  on hardware: ping replies, a 9.84 Gb/s flood counted exactly)
 
 Kintex UltraScale+ KU5P:
 - `ku5p_pcie/` - x8 card: PCIe endpoint, flash programming and reload over PCIe, `fpgaflash` host tool
@@ -87,7 +90,7 @@ are patched locally, as noted in the project READMEs.
 
 ## Legacy
 
-Earlier projects, built with Vivado 2017.4 project-mode scripts (`create_project.tcl`).
+Earlier projects with Vivado project-mode scripts (`create_project.tcl`). They were written for 2017.4 and build with 2024.2.
 
 - `blink/` - 1 Hz LED blinker for the Arty A7-35 (xc7a35t)
 - `blink.up/` - LED blinker for the KU5P board (xcku5p-ffvb676-2-i), differential system clock, non-project build and JTAG program scripts

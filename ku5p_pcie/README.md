@@ -18,7 +18,7 @@ Same register map and host tool; the flash is reached through STARTUPE3.
 
 ## Tools
 The results below are from Vivado 2017.4 on oldgamer. Use 2024.2 (UltraScale+ devices installed) for new
-builds; this project itself has no recorded 2024.2 build.
+builds; a 2024.2 rebuild is recorded at the end of this file.
 
     vivado -mode batch -source gen_ip.tcl      # once
     vivado -mode batch -source build.tcl       # -> build/top.bit, build/top.bin
@@ -62,3 +62,6 @@ MT25QU128ABA1ESE QSPI flash (128 Mbit, 1.8 V, x4), Gen3 x8 edge connector, QSFP2
 - Later on 2026-11-20 (VERSION 0x00020001): REBOOT register at 0x0FC; `fpgaflash -b ku5p reboot` reloads the
   FPGA in 0.5 s and the BAR works straight after. Booted cold from flash it links at Gen3 x8; the Gen1 link
   above came from loading over JTAG. `sim/tb_reboot.v` tests `rtl/fpga_reboot.v`.
+
+
+Vivado 2024.2 rebuild, 2026-11-27 (agentic VM, `timed_build.sh`, one NUMA node, nothing loaded or flashed): gen_ip 1 min 52 s, build 12 min 44 s (default, not dual). WNS +0.610 ns, WHS +0.011 ns, 0 critical warnings.

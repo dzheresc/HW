@@ -24,3 +24,4 @@ report_clock_interaction -file build/clock_interaction.rpt
 report_methodology -file build/methodology.rpt
 write_bitstream -force build/top.bit
 write_debug_probes -force build/top.ltx
+write_cfgmem -force -format bin -interface SPIx4 -size 32 -loadbit "up 0x0 build/top.bit" -file build/top.bin

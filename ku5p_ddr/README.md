@@ -73,3 +73,6 @@ Then:
 
 If anything goes wrong the flash can be rewritten over PCIe as long as the link comes up (this
 design keeps the SPI registers), and the factory image backup is at oldgamer `~/ku5p_factory_a.bin`.
+
+Rebuild 2026-11-27 (2024.2, agentic VM, `../timed_build.sh ku5p_ddr 2024.2 0 gen_ip`, one NUMA node): gen_ip 2 min 27 s, build 24 min 55 s.
+Timing met: WNS +0.343 ns, WHS +0.011 ns. 16.5k LUTs, 58 BRAM tiles, 0 critical warnings. Not flashed. This is the longest build in the repo.
