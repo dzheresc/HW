@@ -5,7 +5,7 @@
 // only. The registers are reachable over JTAG through a JTAG-to-AXI master as well.
 //
 // GTX use: PCIe lanes 0..3 on GTXE2_CHANNEL_X0Y3..X0Y0 (quad 115, CPLL, refclk H6/H5);
-// SFP A/B on X0Y6/X0Y7 (quad 116, QPLL, refclk F6/F5).
+// SFP A on X0Y7 (RX B6/B5), SFP B on X0Y6 (RX C4/C3) (quad 116, QPLL, refclk F6/F5).
 //
 // LEDs: 0 heartbeat (sys clk)  1 PCIe link up  2 QPLL lock
 //       3 SFP A block lock     4 SFP B block lock  5 flash SPI busy

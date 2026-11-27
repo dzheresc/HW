@@ -70,8 +70,8 @@ Kintex-7 xc7k325t:
 - `k7_cap/` - 10G packet capture: SFP A to a host hugepage ring by DMA over PCIe Gen2 x4, C++ pcap tool
 - `k7_cap_ab/` - k7_cap with both SFP+ cages captured into one hugepage ring (port in every record, one pcapng
   interface per cage); flash programmer and REBOOT kept (2024.2; verified on hardware by JTAG load)
-- `k7_link/` - dual-port 10G test: replies to ARP, ping and UDP echo on both SFP+ ports (2024.2; simulated and
-  built, not yet run on hardware)
+- `k7_link/` - dual-port 10G test: replies to ARP, ping and UDP echo on both SFP+ ports (2024.2; SFP B verified
+  on hardware: ping replies, a 9.84 Gb/s flood counted exactly)
 
 Kintex UltraScale+ KU5P:
 - `ku5p_pcie/` - x8 card: PCIe endpoint, flash programming and reload over PCIe, `fpgaflash` host tool

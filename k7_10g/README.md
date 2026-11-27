@@ -1,6 +1,6 @@
 # k7_10g: 10GBASE-R link test on both SFP+ cages
 
-Xilinx `ten_gig_eth_pcs_pma` v6.0 (built with Vivado 2024.2; evaluation-licensed core, the bitstream times out). `pcs_shared` drives SFP A and owns the
+Xilinx `ten_gig_eth_pcs_pma` v6.0 (built with Vivado 2024.2; plain 10GBASE-R is covered by the no-charge license, see Licensing below). `pcs_shared` drives SFP A and owns the
 QPLL; `pcs_noshared` drives SFP B on the same QPLL. Both send XGMII idle; nothing above the PCS.
 
 Build and run (PowerShell):
@@ -25,4 +25,4 @@ case; plain 10GBASE-R is covered by the no-charge `ten_gig_eth_pcs_pma` key in t
 See https://adaptivesupport.amd.com/s/question/0D52E00006hplxXSAQ/ and AR 68203.
 
 
-Vivado 2024.2 rebuild, 2026-11-27 (agentic VM, `timed_build.sh`, one NUMA node, nothing loaded or flashed): upgrade_ip 35 s (ten_gig_eth_pcs_pma 6.0, vio 3.0), build 7 min 13 s. WNS +0.259 ns, WHS +0.056 ns. 2 critical warnings, both the evaluation-license notice for the PCS/PMA core.
+Vivado 2024.2 rebuild, 2026-11-27 (agentic VM, `timed_build.sh`, one NUMA node, nothing loaded or flashed): upgrade_ip 35 s (ten_gig_eth_pcs_pma 6.0, vio 3.0), build 7 min 13 s. WNS +0.259 ns, WHS +0.056 ns. 2 critical warnings, both the evaluation-license notice for the unused BASE-KR feature (see Licensing).

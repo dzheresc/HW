@@ -39,7 +39,16 @@ Host on port B, once (any free address in 10.10.0.0/24; replace `<iface>`):
 Then `ping 192.168.0.110` (any host on the switch's LAN) and `ping 10.10.0.1` (port B host).
 Load: `sudo ping -f -s 1472 10.10.0.1`. Counters on the shed PC: `sudo ~/k7_link/k7link 1`.
 
-Built 2026-11-25 (2024.2): WNS +0.418 ns, WHS +0.040 ns, 12.6k LUTs, 24.5 BRAM. Simulation PASS. Not yet run on hardware.
+Built 2026-11-25 (2024.2): WNS +0.418 ns, WHS +0.040 ns, 12.6k LUTs, 24.5 BRAM. Simulation PASS.
+
+Run on hardware 2026-11-27 (the 2024.2 rebuild loaded by JTAG on oldgamer; SFP B only, from zlab
+ens6; counters from `k7link`):
+- 20 pings to 10.10.0.1: 20 replies, plus 1 ARP reply (21 frames sent).
+- 20 pings to another MAC: counted as received, not answered.
+- 1 625 404 frames of 1514 B at 9.84 Gb/s (zlab `echo10g`, 2 s): "rx good" rose by exactly
+  1 625 404, with 0 bad FCS and 0 FIFO drops.
+
+SFP A was not tested.
 
 ## Load
 
