@@ -1,0 +1,9 @@
+addr 130714460917760
+rkey 2063997
+len 65536
+psn 1193046
+qpn0 2931
+peer_qpn0 17
+qpn1 2932
+peer_qpn1 18
+READY

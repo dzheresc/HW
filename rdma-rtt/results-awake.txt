@@ -1,0 +1,90 @@
+
+16 bytes  (RTT us, 9 rounds x 10000)
+test                        min      p50      p99    p99.9       max    p50 per-round  lost
+A tcp  blocking           21.15    24.76    33.39    38.52     52.83   22.67 -  26.79     0
+A tcp  polling            16.28    19.16    57.21    63.42     70.88   17.10 -  55.73     0
+A udp  blocking           16.87    19.55    30.25    43.66   3021.22   18.08 -  24.12     0
+A udp  polling            12.03    13.77    40.81    44.18     52.26   12.82 -  22.01     0
+B tcp  blocking           21.81    24.62    34.02    39.21     47.39   22.97 -  27.20     0
+B tcp  polling            16.27    18.55    29.12    37.16     53.37   17.15 -  19.92     0
+B udp  blocking           17.32    19.36    30.08    34.79     46.29   18.14 -  20.66     0
+B udp  polling            12.29    14.22    40.67    45.00     62.40   13.22 -  22.83     0
+B rdma send blocking       5.04     9.22    11.48    13.77     39.87    9.07 -  10.99     0
+B rdma send polling        1.73     1.83     2.16     4.61     25.51    1.83 -   1.83     0
+B rdma write polling       1.76     1.81     2.17     4.30     24.95    1.80 -   1.82     0
+B rdma read polling        1.71     1.77     2.08     4.12     31.43    1.77 -   1.78     0
+
+64 bytes  (RTT us, 9 rounds x 10000)
+test                        min      p50      p99    p99.9       max    p50 per-round  lost
+A tcp  blocking           21.38    24.01   102.10   108.65    111.61   22.81 -  94.22     0
+A tcp  polling            16.55    19.30    29.89    38.61     54.64   17.40 -  20.68     0
+A udp  blocking           17.52    19.84    57.91    65.16     74.00   18.30 -  32.32     0
+A udp  polling            12.36    13.98    24.28    29.31     44.90   13.27 -  15.78     0
+B tcp  blocking           21.96    24.58    36.10    50.79     70.83   23.21 -  32.20     0
+B tcp  polling            16.18    18.92    29.44    38.29     74.97   17.14 -  19.42     0
+B udp  blocking           17.59    20.12    30.95    44.57     54.50   18.40 -  24.50     0
+B udp  polling            12.40    14.02    39.90    43.24     52.86   13.29 -  21.42     0
+B rdma send blocking       8.34     9.42    11.95    13.90     36.15    9.32 -  11.48     0
+B rdma send polling        1.97     2.11     2.53     4.94     21.16    2.10 -   2.11     0
+B rdma write polling       1.84     1.91     2.26     4.51     21.92    1.90 -   1.92     0
+B rdma read polling        1.74     1.79     2.13     4.26     24.86    1.79 -   1.80     0
+
+256 bytes  (RTT us, 9 rounds x 10000)
+test                        min      p50      p99    p99.9       max    p50 per-round  lost
+A tcp  blocking           22.13    25.46    34.26    39.89     52.63   23.32 -  27.44     0
+A tcp  polling            16.52    18.76    28.85    36.67     55.33   17.52 -  19.41     0
+A udp  blocking           17.57    19.14    27.46    31.77     47.77   18.43 -  21.05     0
+A udp  polling            12.43    14.73    52.95    60.61     65.64   13.32 -  46.24     0
+B tcp  blocking           22.04    25.08    34.69    39.65     50.58   23.21 -  27.24     0
+B tcp  polling            16.50    18.52    29.14    37.74     50.59   17.42 -  19.53     0
+B udp  blocking           17.74    20.04    29.28    34.87     85.38   18.54 -  21.42     0
+B udp  polling            12.48    14.01    24.15    29.02     39.24   13.33 -  14.93     0
+B rdma send blocking       7.97    10.23    11.21    13.26     37.01   10.10 -  10.64     0
+B rdma send polling        2.72     2.85     3.31     5.38     22.17    2.85 -   2.87     0
+B rdma write polling       2.75     2.85     3.27     5.24     28.48    2.83 -   2.86     0
+B rdma read polling        1.88     1.93     2.25     4.43     18.94    1.92 -   1.93     0
+
+1024 bytes  (RTT us, 9 rounds x 10000)
+test                        min      p50      p99    p99.9       max    p50 per-round  lost
+A tcp  blocking           23.38    27.10    37.28    41.65     49.98   24.66 -  28.70     0
+A tcp  polling            18.40    20.14    30.95    38.98     55.88   19.26 -  21.20     0
+A udp  blocking           18.81    21.18    31.43    35.39     50.35   19.96 -  22.23     0
+A udp  polling            13.66    15.83    24.98    31.10     45.71   14.79 -  16.79     0
+B tcp  blocking           23.16    25.46    37.39    42.77     53.27   24.84 -  30.65     0
+B tcp  polling            18.17    20.14    30.53    39.42     49.61   19.11 -  22.11     0
+B udp  blocking           19.08    21.27    30.37    37.00     49.00   19.99 -  22.90     0
+B udp  polling            13.72    16.05    26.96    39.54     50.74   14.81 -  17.42     0
+B rdma send blocking      10.74    11.15    12.21    14.11     28.07   11.04 -  11.54     0
+B rdma send polling        3.65     3.78     4.21     6.31     18.17    3.77 -   3.79     0
+B rdma write polling       3.67     3.76     4.17     6.15     28.90    3.75 -   3.76     0
+B rdma read polling        2.32     2.38     2.70     4.59     24.75    2.37 -   2.38     0
+
+4096 bytes  (RTT us, 9 rounds x 10000)
+test                        min      p50      p99    p99.9       max    p50 per-round  lost
+A tcp  blocking           29.30    33.20    42.06    48.58     63.96   30.50 -  34.85     0
+A tcp  polling            23.13    26.01    36.61    42.77     59.87   24.27 -  27.55     0
+A udp  blocking           25.28    27.24    38.06    43.38     54.28   26.56 -  27.97     0
+A udp  polling            19.58    21.85    32.91    37.24     52.50   21.00 -  23.61     0
+B tcp  blocking           29.23    33.20    42.65    46.87     67.01   30.57 -  34.17     0
+B tcp  polling            23.39    25.43    36.02    43.04     52.14   24.44 -  27.33     0
+B udp  blocking           23.94    28.00    37.53    42.49     57.06   26.57 -  30.42     0
+B udp  polling            19.67    22.47    32.71    38.24     55.33   21.04 -  23.97     0
+B rdma send blocking      14.43    14.80    16.00    17.94     89.02   14.68 -  15.26     0
+B rdma send polling        7.32     7.49     7.99     9.76     29.34    7.48 -   7.50     0
+B rdma write polling       7.28     7.58     7.95     9.56     32.83    7.57 -   7.58     0
+B rdma read polling        4.25     4.31     4.64     6.96     26.78    4.31 -   4.32     0
+
+8192 bytes  (RTT us, 9 rounds x 10000)
+test                        min      p50      p99    p99.9       max    p50 per-round  lost
+A tcp  blocking           35.41    38.60    46.77    51.92     73.47   36.70 -  40.99     0
+A tcp  polling            29.19    32.50    43.35    48.87     58.42   30.70 -  34.11     0
+A udp  blocking           32.11    34.93    44.52    49.01    178.20   33.65 -  36.78     0
+A udp  polling            26.14    28.48    37.78    44.00     61.58   27.57 -  29.07     0
+B tcp  blocking           35.55    38.75    47.54    51.97     68.07   36.83 -  40.47     0
+B tcp  polling            29.50    32.73    46.46    73.91     86.08   31.09 -  34.31     0
+B udp  blocking           32.03    34.73    43.76    48.22     62.39   33.85 -  37.92     0
+B udp  polling            26.33    29.15    39.29    44.21     61.72   27.86 -  32.19     0
+B rdma send blocking      17.14    18.54    19.60    21.46     43.50   18.42 -  18.92     0
+B rdma send polling        9.96    11.16    11.56    13.47     39.33   11.15 -  11.16     0
+B rdma write polling      11.03    11.19    11.62    13.20     25.06   11.18 -  11.21     0
+B rdma read polling        6.08     6.20     6.52     8.53     19.58    6.20 -   6.21     0
